@@ -7,15 +7,16 @@ import { Calculator, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { CurtainTypeStep } from "./steps/CurtainTypeStep"; //Componente personalizado para el primer paso.
 import { InstallationTypeStep } from "./steps/InstallationTypeStep";
 import { MeasurementsStep } from "./steps/MeasurementsStep";
-
+import { FabricSelectionStep } from "./steps/FabricSelectionStep";
+import { HeaderStyleStep } from "./steps/HeaderStyleStep";
 
 //pasos de la ui
 const STEPS = [
     { id: 'curtain-type', title: 'Tipo de Cortina', component: CurtainTypeStep},
     { id: 'installation', title: 'Instalación', component:InstallationTypeStep },
     { id: 'measurements', title: 'Medidas', component: MeasurementsStep},
-    { id: 'fabric', title: 'Tela' },
-    { id: 'header', title: 'Cabezal' },
+    { id: 'fabric', title: 'Tela', component: FabricSelectionStep },
+    { id: 'header', title: 'Cabezal', component: HeaderStyleStep },
     { id: 'summary', title: 'Presupuesto' },
   ];
 
