@@ -11,9 +11,9 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 152 24% 32%;
     --primary-foreground: 210 40% 98%;
-    --primary-glow: 25 75% 55%;
+    --primary-glow: 152 24% 66%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -30,10 +30,10 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    --radius: 0.5rem;
     /* Gradientes elegantes */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-warm: linear-gradient(135deg, hsl(45 85% 85%), hsl(35 75% 75%));
+    --gradient-warm: linear-gradient(135deg, hsl(152 85% 85%), hsl(152 24% 66%));
     --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(45 25% 94%));
 
     /* Sombras sofisticadas */

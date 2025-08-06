@@ -64,7 +64,19 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+		backgroundImage :{
+			'gradient-primary': 'var(--gradient-primary)',
+    		'gradient-warm': 'var(--gradient-warm)',
+    		'gradient-subtle': 'var(--gradient-subtle)',
+		},
+		 boxShadow: {
+		'elegant': 'var(--shadow-elegant)',
+		'soft': 'var(--shadow-soft)',
+  },transitionProperty:{
+	  'smooth': 'var(--transition-smooth)',
+      'spring': 'var(--transition-spring)',
+  }
   	}
   },
   plugins: [require("tailwindcss-animate")],
