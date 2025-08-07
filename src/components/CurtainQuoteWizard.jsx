@@ -31,15 +31,16 @@ const STEPS = [
     const [data, setData] = useState({
       curtainType: null,
       hasInstallation: null,
-      heightOption: '',
-      widthOption: '',
+      heightOption: null,
+      widthOption: null,
       customHeight: undefined,
       customWidth: undefined,
       selectedFabric: '',
       fabricWidth: 0,
+      fabricName:"",
+      fabricPrice:0,
       headerStyle: '',
       multiplier: 2,
-      combinedStyles: undefined
     });
 
 
@@ -50,7 +51,10 @@ const STEPS = [
       switch (currentStep) {
         case 0: return data.curtainType !== null;
         case 1: return data.hasInstallation !== null;
-        case 2: return data.heightOption && data.widthOption;
+        case 2: 
+         return data.heightOption && data.widthOption && 
+         (data.customHeight !== undefined || data.heightOption !== 'custom') && 
+         (data.customWidth !== undefined || data.widthOption !== 'custom');
         case 3: return data.selectedFabric;
         case 4: return data.headerStyle;
         default: return true;

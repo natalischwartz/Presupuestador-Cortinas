@@ -10,7 +10,9 @@ export const FabricSelectionStep = ({ data, updateData }) => {
     const handleFabricSelect = (fabric) => {
     updateData({
       selectedFabric: fabric._id,
-      fabricWidth: fabric.width
+      fabricWidth: fabric.width,
+      fabricName: fabric.name,
+      fabricPrice : fabric.price
     });
   };
 
@@ -26,6 +28,8 @@ export const FabricSelectionStep = ({ data, updateData }) => {
         setDataProducts(data);
       });
   }, []);
+
+  console.log("esto es lo que me devuelve data " , data)
     return (
     <div className="space-y-6">
       <div className="text-center mb-8">

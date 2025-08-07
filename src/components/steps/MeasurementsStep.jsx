@@ -6,41 +6,66 @@ import { Button } from "@/components/ui/button";
 import { Ruler, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 
 export const MeasurementsStep = ({ data, updateData }) => {
-  const [customHeight, setCustomHeight] = useState(data.customHeight || 0);
-  const [customWidth, setCustomWidth] = useState(data.customWidth || 0);
+  //estos estados locales ya estan en data como estados globales.
+  // const [customHeight, setCustomHeight] = useState(data.customHeight || 0);
+  // const [customWidth, setCustomWidth] = useState(data.customWidth || 0);
 
-  const heightOptions = data.hasInstallation ? [
-    { id: 'rod-to-floor', label: 'Desde el barral/riel hasta donde termina la cortina' }
-  ] : [
-    { id: 'rod-to-floor', label: 'Del taparollo hasta donde llega la cortina' },
-    { id: 'ceiling-to-floor', label: 'Del techo hasta donde llega la cortina' },
-    { id: 'custom', label: 'Altura personalizada' }
-  ];
+  const heightOptions = data.hasInstallation
+    ? [
+        {
+          id: "rod-to-floor",
+          label: "Desde el barral/riel hasta donde termina la cortina",
+        },
+      ]
+    : [
+        {
+          id: "rod-to-floor",
+          label: "Del taparollo hasta donde llega la cortina",
+        },
+        {
+          id: "ceiling-to-floor",
+          label: "Del techo hasta donde llega la cortina",
+        },
+        { id: "custom", label: "Altura personalizada" },
+      ];
 
-  const widthOptions = data.hasInstallation ? [
-    { id: 'rail-width', label: 'Medida total del riel o barral (punta a punta)' }
-  ] : [
-    { id: 'window-plus', label: 'Marco de ventana + 10 cm a cada lado' },
-    { id: 'wall-to-wall', label: 'De pared a pared' }
-  ];
+  const widthOptions = data.hasInstallation
+    ? [
+        {
+          id: "rail-width",
+          label: "Medida total del riel o barral (punta a punta)",
+        },
+      ]
+    : [
+        { id: "window-plus", label: "Marco de ventana + 10 cm a cada lado" },
+        { id: "wall-to-wall", label: "De pared a pared" },
+      ];
 
+  //cambia la opcion de altura
   const handleHeightChange = (optionId) => {
-    updateData({ heightOption: optionId });
-    if (optionId !== 'custom') {
-      setCustomHeight(0);
-      updateData({ customHeight: undefined });
-    }
+    updateData({
+      heightOption: optionId,
+      customHeight: undefined, // Siempre reseteamos a undefined sin importar la opción
+    });
+  };
+
+  // Nueva función para manejar cambio de opción de ancho
+  const handleWidthChange = (optionId) => {
+    updateData({
+      widthOption: optionId,
+      customWidth: undefined, // Siempre reseteamos a undefined al cambiar opción
+    });
   };
 
   const handleCustomHeightChange = (value) => {
-    setCustomHeight(value);
     updateData({ customHeight: value });
   };
 
   const handleCustomWidthChange = (value) => {
-    setCustomWidth(value);
     updateData({ customWidth: value });
   };
+
+   console.log("esto es lo que me devuelve data " , data)
 
   return (
     <div className="space-y-8">
@@ -63,51 +88,71 @@ export const MeasurementsStep = ({ data, updateData }) => {
 
           <div className="space-y-3">
             {heightOptions.map((option) => (
-              <label
-                key={option.id}
-                className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                  data.heightOption === option.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:bg-muted/50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="height"
-                  value={option.id}
-                  checked={data.heightOption === option.id}
-                  onChange={() => handleHeightChange(option.id)}
-                  className="sr-only"
-                />
-                <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                  data.heightOption === option.id
-                    ? 'border-primary bg-primary'
-                    : 'border-muted-foreground'
-                }`}>
-                  {data.heightOption === option.id && (
-                    <div className="w-2 h-2 bg-primary-foreground rounded-full mx-auto mt-0.5" />
-                  )}
-                </div>
-                <span className="text-sm">{option.label}</span>
-              </label>
+              <div key={option.id}>
+                <label
+                  className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                    data.heightOption === option.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="height"
+                    value={option.id}
+                    checked={data.heightOption === option.id}
+                    onChange={() => handleHeightChange(option.id)}
+                    className="sr-only"
+                  />
+
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                      data.heightOption === option.id
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground"
+                    }`}
+                  >
+                    {data.heightOption === option.id && (
+                      <div className="w-2 h-2 bg-primary-foreground rounded-full mx-auto mt-0.5" />
+                    )}
+                  </div>
+                  <span className="text-sm">{option.label}</span>
+                </label>
+
+                {/* Mostrar input para TODAS las opciones cuando estén seleccionadas */}
+                {data.heightOption === option.id && (
+                  <div className="mt-2 p-4 bg-muted/30 rounded-lg">
+                    <Label
+                      htmlFor={`height-input-${option.id}`}
+                      className="text-sm font-medium"
+                    >
+                      {option.id === "custom"
+                        ? "Altura personalizada (metros)"
+                        : `Ingrese medida para ${option.label} (metros)`}
+                    </Label>
+                    <Input
+                      id={`height-input-${option.id}`}
+                      type="number"
+                      value={data.customHeight ?? ""}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value);
+                        handleCustomHeightChange(value);
+                      }}
+                      className="mt-2"
+                      placeholder={`Ej: ${
+                        option.id === "standard" ? "210" : "250"
+                      }`}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-
-          {data.heightOption === 'custom' && (
-            <div className="mt-4 p-4 bg-muted/30 rounded-lg">
-              <Label htmlFor="custom-height" className="text-sm font-medium">
-                Altura personalizada (cm)
-              </Label>
-              <Input
-                id="custom-height"
-                type="number"
-                value={customHeight || ''}
-                onChange={(e) => handleCustomHeightChange(Number(e.target.value))}
-                className="mt-2"
-                placeholder="Ej: 250"
-              />
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -123,51 +168,70 @@ export const MeasurementsStep = ({ data, updateData }) => {
 
           <div className="space-y-3">
             {widthOptions.map((option) => (
-              <label
-                key={option.id}
-                className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                  data.widthOption === option.id
-                    ? 'border-accent bg-accent/5'
-                    : 'border-border hover:bg-muted/50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="width"
-                  value={option.id}
-                  checked={data.widthOption === option.id}
-                  onChange={() => updateData({ widthOption: option.id })}
-                  className="sr-only"
-                />
-                <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                  data.widthOption === option.id
-                    ? 'border-accent bg-accent'
-                    : 'border-muted-foreground'
-                }`}>
-                  {data.widthOption === option.id && (
-                    <div className="w-2 h-2 bg-accent-foreground rounded-full mx-auto mt-0.5" />
-                  )}
-                </div>
-                <span className="text-sm">{option.label}</span>
-              </label>
+              <div key={option.id}>
+                <label
+                  className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                    data.widthOption === option.id
+                      ? "border-accent bg-accent/5"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="width"
+                    value={option.id}
+                    checked={data.widthOption === option.id}
+                    onChange={() => handleWidthChange(option.id)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                      data.widthOption === option.id
+                        ? "border-accent bg-accent"
+                        : "border-muted-foreground"
+                    }`}
+                  >
+                    {data.widthOption === option.id && (
+                      <div className="w-2 h-2 bg-accent-foreground rounded-full mx-auto mt-0.5" />
+                    )}
+                  </div>
+                  <span className="text-sm">{option.label}</span>
+                </label>
+
+                {/* Input para todas las opciones cuando están seleccionadas */}
+                {data.widthOption === option.id && (
+                  <div className="mt-2 p-4 bg-muted/30 rounded-lg">
+                    <Label
+                      htmlFor={`width-input-${option.id}`}
+                      className="text-sm font-medium"
+                    >
+                      {option.id === "wall-to-wall"
+                        ? "Distancia pared a pared (m)"
+                        : option.id === "rail-width"
+                        ? "Medida del riel/barral (m)"
+                        : `Ingrese ancho para ${option.label} (m)`}
+                    </Label>
+                    <Input
+                      id={`width-input-${option.id}`}
+                      type="number"
+                      value={data.customWidth ?? ""}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value);
+                        handleCustomWidthChange(value);
+                      }}
+                      className="mt-2"
+                      placeholder="Ej: 2.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-
-          {(data.widthOption === 'wall-to-wall' || data.widthOption === 'rail-width') && (
-            <div className="mt-4 p-4 bg-muted/30 rounded-lg">
-              <Label htmlFor="custom-width" className="text-sm font-medium">
-                {data.widthOption === 'wall-to-wall' ? 'Distancia pared a pared (cm)' : 'Medida del riel/barral (cm)'}
-              </Label>
-              <Input
-                id="custom-width"
-                type="number"
-                value={customWidth || ''}
-                onChange={(e) => handleCustomWidthChange(Number(e.target.value))}
-                className="mt-2"
-                placeholder="Ej: 200"
-              />
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -175,12 +239,11 @@ export const MeasurementsStep = ({ data, updateData }) => {
         <div className="text-center p-4 bg-success/10 rounded-lg border border-success/20">
           <Ruler className="h-5 w-5 text-success mx-auto mb-2" />
           <p className="text-success-foreground text-sm">
-            Medidas registradas correctamente. Podés continuar al siguiente paso.
+            Medidas registradas correctamente. Podés continuar al siguiente
+            paso.
           </p>
         </div>
       )}
     </div>
   );
 };
-
-

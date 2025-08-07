@@ -24,7 +24,6 @@ export const InstallationTypeStep = ({ data, updateData }) => {
   ];
 
   console.log("esto es lo que me devuelve data " , data)
-  console.log("esto es lo que me devuelve updateData", updateData)
 
   return (
     <div className="space-y-6">
