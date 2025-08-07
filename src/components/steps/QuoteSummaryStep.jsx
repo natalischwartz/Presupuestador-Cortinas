@@ -38,8 +38,13 @@ export const QuoteSummaryStep = ({ data }) => {
   // console.log(altoConAgregados)
 
   // Verificar si el ancho de la tela cubre el alto necesario
+  //hay que pasar el data.fabricWidth a solo numero asi compara
+
+  const anchoNumerico = parseInt(data.fabricWidth); // Esto funciona porque parseInt lee hasta el primer caracter no numérico
+  // console.log(anchoNumerico);//devuelve 3 
+
   const anchoTelaCubreAlto = data.selectedFabric 
-  ? data.fabricWidth >= altoConAgregados
+  ? anchoNumerico >= altoConAgregados
   : false;
   console.log(anchoTelaCubreAlto);//boolean
   
@@ -49,25 +54,27 @@ export const QuoteSummaryStep = ({ data }) => {
   if (anchoTelaCubreAlto) {
     // Caso 1: El ancho de la tela cubre el alto
     metrosTelaNecesarios = Math.ceil(anchoConMultiplicadorDeCabezal);
+    // console.log(metrosTelaNecesarios);
   } else {
     // Caso 2: Necesitamos calcular paños
-    panosNecesarios = Math.ceil(anchoConMultiplicadorDeCabezal / data.selectedFabric?.width);
+    panosNecesarios = Math.ceil(anchoConMultiplicadorDeCabezal / anchoNumerico);
     metrosTelaNecesarios = panosNecesarios * altoConAgregados;
   }
 
   // 3. Cálculo de costos
-  // Precio de confección según altura
+  // Precio de confección según altura. estoque vaya en variables de entorno
   const precioConfeccion = windowHeight > 2.70 ? BASE_PRICES.CONFECTION_EXTRA : BASE_PRICES.CONFECTION;
   
   // Costo de tela
-  const costoTotalTela = metrosTelaNecesarios * data.selectedFabric?.price;
+  const costoTotalTela = metrosTelaNecesarios * data.fabricPrice;
+  // console.log(costoTotalTela);
   
   // Costo de confección
   const costoConfeccion = anchoTelaCubreAlto 
-    ? Math.ceil(anchoConMultiplicadorDeCabezal) * precioConfeccion
-    : panosNecesarios * data.selectedFabric?.width * precioConfeccion;
+    ? metrosTelaNecesarios * precioConfeccion
+    : (Math.ceil(panosNecesarios * data.fabricWidth) * precioConfeccion);
   
-  // Costo de riel (si no tiene instalación)
+  // Costo de riel. si el cliente quiere o no 
   const necesitaRiel = !data.hasInstallation && data.railNeeded;
   const metrosRiel = necesitaRiel ? Math.ceil(windowWidth * 1.1) : 0; // +10% para solapamiento
   const costoRiel = metrosRiel * BASE_PRICES.RAIL;
@@ -75,7 +82,7 @@ export const QuoteSummaryStep = ({ data }) => {
   // Costo de instalación
   const costoInstalacion = data.hasInstallation ? BASE_PRICES.INSTALLATION : 0;
   
-  // Costo de toma de medidas
+  // Costo de toma de medidas. que el cliente lo pueda seleccionar 
   const costoMedidas = data.ubicacion === 'CABA' 
     ? BASE_PRICES.MEASUREMENT_CABA 
     : BASE_PRICES.MEASUREMENT_GBA;
@@ -124,13 +131,13 @@ export const QuoteSummaryStep = ({ data }) => {
       label: 'Tela', 
       amount: costoTotalTela, 
       icon: SwatchBook, 
-      details: `${metrosTelaNecesarios.toFixed(2)}m x $${data.selectedFabric?.price}/m` 
+      details: `${metrosTelaNecesarios.toFixed(2)}m x $${data.fabricPrice}/m` 
     },
     { 
       label: 'Confección', 
       amount: costoConfeccion, 
       icon: Scissors,
-      details: `${anchoTelaCubreAlto ? 'Corte simple' : `${panosNecesarios} paños`} x $${precioConfeccion}/m`
+      details: `${anchoTelaCubreAlto ? 'Corte simple' : `${panosNecesarios} paños`}`
     },
     { 
       label: 'Riel', 
@@ -246,8 +253,8 @@ export const QuoteSummaryStep = ({ data }) => {
                 </li>
               )}
               <li className="flex items-start gap-2">
-                <span>•</span>
-                <span>La confección tiene {windowHeight > 2.70 ? 'costo adicional' : 'costo estándar'} por altura superior a 2.70m</span>
+                {/* <span>•</span> */}
+                {/* <span>La confección tiene {windowHeight > 2.70 ? 'costo adicional' : 'costo estándar'} por altura superior a 2.70m</span> */}
               </li>
               {data.hasInstallation && (
                 <li className="flex items-start gap-2">
@@ -276,22 +283,22 @@ export const QuoteSummaryStep = ({ data }) => {
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Tiempo de entrega estimado: 7-10 días hábiles</span>
+                <span>Tiempo de entrega estimado: 10-20 días hábiles</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Se aceptan todas las tarjetas de crédito</span>
+                <span>Formas de pago: Efectivo, transferencia, Homebanking,Mercado Pago, cuenta DNI, Modo</span>
               </li>
             </ul>
           </CardContent>
         </Card>
       </div>
 
-      {/* CTA Final */}
+      {/* CTA Final que lleve a un panel de administrador con el presupuesto */}
       <Card className="bg-gradient-primary text-primary-foreground">
         <CardContent className="p-6 text-center">
           <Calculator className="h-8 w-8 mx-auto mb-3 opacity-90" />
-          <h3 className="text-xl font-bold mb-2">¡Cotización lista!</h3>
+          {/* <h3 className="text-xl font-bold mb-2">¡Cotización lista!</h3> */}
           <p className="text-sm opacity-90 mb-4">
             Total: <span className="text-2xl font-bold">${total.toLocaleString()}</span>
           </p>
