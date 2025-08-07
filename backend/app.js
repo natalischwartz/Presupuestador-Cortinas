@@ -5,7 +5,11 @@ import { config } from 'dotenv'
 config();
 import shopRoutes from './src/routes/shopRoutes.js'
 
+const app = express();
+
 const PORT = process.env.PORT || 3000;
+app.use(cors())
+
 import { connectToDB } from './src/utils/mongoose.js';
 
 try {
@@ -15,14 +19,12 @@ try {
     process.exit(1); // Exit the process if there's a connection error
   }
 
-const app = express();
+
 
 
 app.use(shopRoutes);
-var corsOptions = {
-  origin: 'http://localhost:5173'
-}
-app.use(cors(corsOptions))
+
+
 
 app.listen(PORT,()=> console.log(`http://localhost:${PORT}`));
 

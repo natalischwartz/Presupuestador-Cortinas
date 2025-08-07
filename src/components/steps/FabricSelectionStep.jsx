@@ -2,32 +2,30 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shirt, Info } from "lucide-react";
 import { getProducts } from "@/utils/httpCliente";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-//esto viene de una base de datos
-const fabrics = [
-  { id: 'blackout', name: 'Blackout', width: 3.0, price: 1200, description: 'Bloquea completamente la luz' },
-  { id: 'voile', name: 'Voile', width: 3.2, price: 800, description: 'Tela translúcida y elegante' },
-  { id: 'gasa', name: 'Gasa', width: 2.8, price: 650, description: 'Ligera y con caída natural' },
-  { id: 'lino', name: 'Lino', width: 2.7, price: 950, description: 'Natural y resistente' },
-  { id: 'algodon', name: 'Algodón', width: 1.5, price: 750, description: 'Clásico y versátil' },
-  { id: 'jacquard', name: 'Jacquard', width: 1.4, price: 1400, description: 'Con textura y diseños' },
-];
 
 export const FabricSelectionStep = ({ data, updateData }) => {
 
     const handleFabricSelect = (fabric) => {
     updateData({
-      selectedFabric: fabric.id,
+      selectedFabric: fabric._id,
       fabricWidth: fabric.width
     });
   };
 
-   useEffect(()=>{
-      getProducts()
+  const [products, setDataProducts] = useState([])
+  
 
-   },)
-
+  useEffect(() => {
+    fetch("http://localhost:3000")
+      .then((res) => {
+        return res.json();
+      })
+      .then((data) => {
+        setDataProducts(data);
+      });
+  }, []);
     return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -38,12 +36,12 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {fabrics.map((fabric) => {
-          const isSelected = data.selectedFabric === fabric.id;
+        {products.map((fabric) => {
+          const isSelected = data.selectedFabric === fabric._id;
           
           return (
             <Card
-              key={fabric.id}
+              key={fabric._id}
               className={`cursor-pointer transition-all duration-300 hover:shadow-soft ${
                 isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
               }`}

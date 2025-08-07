@@ -9,6 +9,7 @@ import { InstallationTypeStep } from "./steps/InstallationTypeStep";
 import { MeasurementsStep } from "./steps/MeasurementsStep";
 import { FabricSelectionStep } from "./steps/FabricSelectionStep";
 import { HeaderStyleStep } from "./steps/HeaderStyleStep";
+import { QuoteSummaryStep } from "./steps/QuoteSummaryStep";
 
 //pasos de la ui
 const STEPS = [
@@ -17,7 +18,7 @@ const STEPS = [
     { id: 'measurements', title: 'Medidas', component: MeasurementsStep},
     { id: 'fabric', title: 'Tela', component: FabricSelectionStep },
     { id: 'header', title: 'Cabezal', component: HeaderStyleStep },
-    { id: 'summary', title: 'Presupuesto' },
+    { id: 'summary', title: 'Presupuesto', component:QuoteSummaryStep  },
   ];
 
 
