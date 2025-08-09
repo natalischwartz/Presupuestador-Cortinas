@@ -21,6 +21,8 @@ const BASE_PRICES = {
   CONFECTION_EXTRA: 22000, // Precio para alturas > 2.70m
   RAIL: 19500, // Precio por metro de riel
   INSTALLATION: 25000, // Precio fijo de instalación
+  MEASUREMENT_CABA: 20000,
+  MEASUREMENT_GBA: 30000,
 };
 
 export const QuoteSummaryStep = ({ data, updateData }) => {
@@ -87,36 +89,44 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
 
   /*************RIEL *****************/
   //Costo de riel. si el cliente quiere o no
-  const necesitaRiel = !data.hasInstallation && data.railNeeded;
-  const metrosRiel = necesitaRiel ? Math.ceil(windowWidth * 1.1) : 0; // +10% para solapamiento
+  const calcularMetrosRiel = () => {
+    if (!data.necesitaRiel || !windowWidth) return 0;
+
+    // Calculamos metros necesarios (redondeando hacia arriba a múltiplos de 0.20m)
+    const metrosPorVentana = Math.ceil(windowWidth / 0.2) * 0.2;
+    return (data.cantidadVentanasRiel || 1) * metrosPorVentana;
+  };
+
+  const metrosRiel = calcularMetrosRiel();
   const costoRiel = metrosRiel * BASE_PRICES.RAIL;
 
   const rielOptions = [
-    { id: "si-riel", label: "Sí, necesito riel/barral" },
-    { id: "no-riel", label: "No, ya tengo el riel instalado" },
+    { id: "si-riel", label: "Sí, necesito rieles" },
+    { id: "no-riel", label: "No necesito rieles" },
   ];
 
-  // Handlers para Riel
+  // Handler para cambio de opción de rieles
   const handleRielChange = (optionId) => {
     updateData({
       necesitaRiel: optionId === "si-riel",
-      metrosRiel: optionId === "si-riel" ? 0 : undefined,
+      cantidadVentanasRiel: optionId === "si-riel" ? 1 : undefined,
+      metrosRiel: optionId === "si-riel" ? calcularMetrosRiel() : 0,
     });
   };
 
-  const handleMetrosRielChange = (value) => {
-    updateData({ metrosRiel: Number(value) });
+  // Handler para cambio de cantidad de ventanas
+  const handleCantidadVentanasRielChange = (value) => {
+    const cantidad = Number(value);
+    updateData({
+      cantidadVentanasRiel: cantidad,
+      metrosRiel: calcularMetrosRiel(),
+    });
   };
 
   // Costo de instalación
   const costoInstalacion = data.hasInstallation ? BASE_PRICES.INSTALLATION : 0;
 
   /*************TOMA DE MEDIDAS *****************/
-  //Costo de toma de medidas. que el cliente lo pueda seleccionar
-  // const costoTomaMedidas =
-  //   data.ubicacion === "CABA"
-  //     ? BASE_PRICES.MEASUREMENT_CABA
-  //     : BASE_PRICES.MEASUREMENT_GBA;
   const tomaMedidasOptions = [
     { id: "si-tm", label: "Sí, necesito toma de medidas" },
     { id: "no-tm", label: "No necesito rectificar medidas" },
@@ -126,6 +136,13 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
     { id: "CABA", label: "C.A.B.A", cost: 20000 },
     { id: "GBA", label: "G.B.A", cost: 30000 },
   ];
+
+  const costoTotalTM = data.necesitaTM
+    ? (data.cantidadVentanas || 1) *
+      (data.ubicacionTM === "CABA"
+        ? BASE_PRICES.MEASUREMENT_CABA
+        : BASE_PRICES.MEASUREMENT_GBA)
+    : 0;
 
   // Handlers para Toma de Medidas
 
@@ -147,7 +164,11 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
 
   // Total general
   const subtotal =
-    costoTotalTela + costoConfeccion + costoRiel + costoInstalacion;
+    costoTotalTela +
+    costoConfeccion +
+    costoRiel +
+    costoInstalacion +
+    costoTotalTM;
   // costoTomaMedidas;
   const total = subtotal;
 
@@ -206,22 +227,23 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
       }`,
     },
     {
-      label: "Riel",
+      label: "Toma de medidas",
+      amount: costoTotalTM,
+      icon: Ruler,
+      included: data.necesitaTM,
+      details: data.necesitaTM
+        ? `${data.cantidadVentanas} ventana(s) en ${data.ubicacionTM}`
+        : "No solicitado",
+    },
+    {
+      label: "Rieles",
       amount: costoRiel,
       icon: Settings,
-      included: necesitaRiel,
-      details: necesitaRiel
-        ? `${metrosRiel}m x $${BASE_PRICES.RAIL}/m`
-        : "No requiere",
+      included: data.necesitaRiel,
+      details: data.necesitaRiel
+        ? `${metrosRiel.toFixed(2)}m (${data.cantidadVentanasRiel} ventana(s))`
+        : "No solicitado",
     },
-    // {
-    //   label: "Toma de medidas",
-    //   amount: costoTomaMedidas,
-    //   icon: Ruler,
-    //   details: `Incluye visita técnica ${
-    //     data.ubicacion === "CABA" ? "en CABA" : "fuera de CABA"
-    //   }`,
-    // },
     {
       label: "Instalación",
       amount: costoInstalacion,
@@ -295,191 +317,197 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
               </div>
             ))}
             {/* Sección de Toma de Medidas */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <Ruler className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm">Toma de medidas</p>
-                  <p className="text-xs text-muted-foreground">ver</p>
+            <div className="py-2">
+              <div className=" flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Ruler className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-medium">Toma de medidas</span>
                 </div>
               </div>
-              <span className="font-semibold">$0</span>
-            </div>
-
-            <div className="space-y-3">
-              {tomaMedidasOptions.map((option) => (
-                <div key={option.id}>
-                  <label
-                    className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                      data.necesitaTM === (option.id === "si-tm")
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-muted/50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="tomaMedidas"
-                      checked={data.necesitaTM === (option.id === "si-tm")}
-                      onChange={() => handleTomaMedidasChange(option.id)}
-                      className="sr-only"
-                    />
-                    {/* Estilo del radio button */}
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 mr-3 ${
+              <div className="space-y-3 ml-7">
+                {tomaMedidasOptions.map((option) => (
+                  <div key={option.id}>
+                    <label
+                      className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
                         data.necesitaTM === (option.id === "si-tm")
-                          ? "border-secondary bg-secondary"
-                          : "border-muted-foreground"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
-                      {data.necesitaTM === (option.id === "si-tm") && (
-                        <div className="w-2 h-2 bg-secondary-foreground rounded-full mx-auto mt-0.5" />
-                      )}
-                    </div>
-                    <span className="text-sm">{option.label}</span>
-                  </label>
-
-                  {data.necesitaTM === true && option.id === "si-tm" && (
-                    <div className="mt-2 p-4 bg-muted/30 rounded-lg space-y-3">
-                      <div>
-                        <Label
-                          htmlFor="cantidad-ventanas"
-                          className="text-sm font-medium"
-                        >
-                          Cantidad de ventanas
-                        </Label>
-                        <Input
-                          id="cantidad-ventanas"
-                          type="number"
-                          value={data.cantidadVentanas ?? 1}
-                          onChange={(e) =>
-                            handleCantidadVentanasChange(e.target.value)
-                          }
-                          min="1"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        {ubicationOptions.map((option) => (
-                          <div key={option.id}>
-                            <label
-                              className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                                data.ubicacionTM === option.id
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border hover:bg-muted/50"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="width"
-                                value={option.id}
-                                checked={data.ubicacionTM === option.id}
-                                onChange={() =>
-                                  handleUbicacionChange(option.id)
-                                }
-                                className="sr-only"
-                              />
-                              <div
-                                className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                                  data.ubicacionTM === option.id
-                                    ? "border-primary bg-primary/5"
-                                    : "border-muted-foreground"
-                                }`}
-                              >
-                                {data.ubicacionTM === option.id && (
-                                  <div className="w-2 h-2 bg-accent-foreground rounded-full mx-auto mt-0.5" />
-                                )}
-                              </div>
-                              <div className="">
-                                <span className="text-sm">{option.label}</span>
-                                <span>{option.cost}</span>
-                              </div>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* </CardContent>
-            </Card> */}
-
-            {/* Sección de Riel */}
-            <Card className="border-accent/20 mt-6">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-accent/10 rounded-lg">
-                    <Settings className="h-5 w-5 text-accent" />
-                  </div>
-                  <h4 className="text-lg font-semibold">Riel/Barral</h4>
-                </div>
-
-                <div className="space-y-3">
-                  {rielOptions.map((option) => (
-                    <div key={option.id}>
-                      <label
-                        className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                          data.necesitaRiel === (option.id === "si-riel")
-                            ? "border-accent bg-accent/5"
-                            : "border-border hover:bg-muted/50"
+                      <input
+                        type="radio"
+                        name="tomaMedidas"
+                        checked={data.necesitaTM === (option.id === "si-tm")}
+                        onChange={() => handleTomaMedidasChange(option.id)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                          data.necesitaTM === (option.id === "si-tm")
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="riel"
-                          checked={
-                            data.necesitaRiel === (option.id === "si-riel")
-                          }
-                          onChange={() => handleRielChange(option.id)}
-                          className="sr-only"
-                        />
-                        {/* Estilo del radio button */}
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                            data.necesitaRiel === (option.id === "si-riel")
-                              ? "border-accent bg-accent"
-                              : "border-muted-foreground"
-                          }`}
-                        >
-                          {data.necesitaRiel === (option.id === "si-riel") && (
-                            <div className="w-2 h-2 bg-accent-foreground rounded-full mx-auto mt-0.5" />
-                          )}
-                        </div>
-                        <span className="text-sm">{option.label}</span>
-                      </label>
-
-                      {data.necesitaRiel === true &&
-                        option.id === "si-riel" && (
-                          <div className="mt-2 p-4 bg-muted/30 rounded-lg">
-                            <Label
-                              htmlFor="metros-riel"
-                              className="text-sm font-medium"
-                            >
-                              Metros de riel necesarios
-                            </Label>
-                            <Input
-                              id="metros-riel"
-                              type="number"
-                              value={data.metrosRiel ?? ""}
-                              onChange={(e) =>
-                                handleMetrosRielChange(e.target.value)
-                              }
-                              min="0"
-                              step="0.1"
-                              className="mt-1"
-                              placeholder="Ej: 3.5"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Precio por metro: $19,500
-                            </p>
-                          </div>
+                        {data.necesitaTM === (option.id === "si-tm") && (
+                          <div className="w-2 h-2 bg-primary-foreground rounded-full mx-auto mt-0.5" />
                         )}
-                    </div>
-                  ))}
+                      </div>
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+
+                    {data.necesitaTM === true && option.id === "si-tm" && (
+                      <div className="mt-2 p-3 bg-muted/30 rounded-lg space-y-3">
+                        <div>
+                          <Label
+                            htmlFor="cantidad-ventanas"
+                            className="text-sm font-medium block mb-1"
+                          >
+                            Cantidad de ventanas
+                          </Label>
+                          <Input
+                            id="cantidad-ventanas"
+                            type="number"
+                            value={data.cantidadVentanas || 1}
+                            onChange={(e) =>
+                              handleCantidadVentanasChange(e.target.value)
+                            }
+                            min="1"
+                            className="w-full"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium block mb-1">
+                            Ubicación
+                          </Label>
+                          <div className="space-y-2">
+                            {ubicationOptions.map((ubicacion) => (
+                              <label
+                                key={ubicacion.id}
+                                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
+                                  data.ubicacionTM === ubicacion.id
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border"
+                                }`}
+                              >
+                                <div className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="ubicacionTM"
+                                    checked={data.ubicacionTM === ubicacion.id}
+                                    onChange={() =>
+                                      handleUbicacionChange(ubicacion.id)
+                                    }
+                                    className="sr-only"
+                                  />
+                                  <div
+                                    className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                                      data.ubicacionTM === ubicacion.id
+                                        ? "border-primary bg-primary"
+                                        : "border-muted-foreground"
+                                    }`}
+                                  >
+                                    {data.ubicacionTM === ubicacion.id && (
+                                      <div className="w-2 h-2 bg-primary-foreground rounded-full mx-auto mt-0.5" />
+                                    )}
+                                  </div>
+                                  <span>{ubicacion.label}</span>
+                                </div>
+                                <span className="font-medium">
+                                  ${ubicacion.cost.toLocaleString()}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sección de Riel */}
+            <div className="py-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-medium">Rieles</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="space-y-3 ml-7">
+                {rielOptions.map((option) => (
+                  <div key={option.id}>
+                    <label
+                      className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
+                        data.necesitaRiel === (option.id === "si-riel")
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="rieles"
+                        checked={
+                          data.necesitaRiel === (option.id === "si-riel")
+                        }
+                        onChange={() => handleRielChange(option.id)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                          data.necesitaRiel === (option.id === "si-riel")
+                            ? "border-primary bg-primary"
+                            : "border-muted-foreground"
+                        }`}
+                      >
+                        {data.necesitaRiel === (option.id === "si-riel") && (
+                          <div className="w-2 h-2 bg-primary-foreground rounded-full mx-auto mt-0.5" />
+                        )}
+                      </div>
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+
+                    {data.necesitaRiel === true && option.id === "si-riel" && (
+                      <div className="mt-2 p-3 bg-muted/30 rounded-lg space-y-3">
+                        <div>
+                          <Label
+                            htmlFor="cantidad-ventanas-riel"
+                            className="text-sm font-medium block mb-1"
+                          >
+                            Cantidad de ventanas
+                          </Label>
+                          <Input
+                            id="cantidad-ventanas-riel"
+                            type="number"
+                            value={data.cantidadVentanasRiel || 1}
+                            onChange={(e) =>
+                              handleCantidadVentanasRielChange(e.target.value)
+                            }
+                            min="1"
+                            className="w-full"
+                          />
+                        </div>
+
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>Metros necesarios: {metrosRiel.toFixed(2)}m</p>
+                          <p>
+                            (Ancho por ventana:{" "}
+                            {Math.ceil((windowWidth * 1.1) / 0.2) * 0.2}m)
+                          </p>
+                          <p>
+                            Precio por metro: $
+                            {BASE_PRICES.RAIL.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Separator className="my-4" />
             <div className="flex items-center justify-between py-2 text-lg font-bold">
               <span>Total</span>
@@ -508,19 +536,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                   {data.ubicacion === "CABA" ? "(CABA)" : "(GBA)"}
                 </span>
               </li>
-              {necesitaRiel && (
-                <li className="flex items-start gap-2">
-                  <span>•</span>
-                  <span>
-                    El riel se calcula con un 10% adicional para solapamiento:{" "}
-                    {metrosRiel}m
-                  </span>
-                </li>
-              )}
-              <li className="flex items-start gap-2">
-                {/* <span>•</span> */}
-                {/* <span>La confección tiene {windowHeight > 2.70 ? 'costo adicional' : 'costo estándar'} por altura superior a 2.70m</span> */}
-              </li>
+
               {data.hasInstallation && (
                 <li className="flex items-start gap-2">
                   <span>•</span>

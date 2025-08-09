@@ -42,9 +42,10 @@ const STEPS = [
       headerStyle: '',
       multiplier: 2,
       necesitaTM: null,
-      cantidadVentanas: 1,
       ubicationTM: "CABA",
       necesitaRiel: null,
+      cantidadVentanas: 1,
+      cantidadVentanasRiel:0,
       metrosRiel: 0
     });
 
