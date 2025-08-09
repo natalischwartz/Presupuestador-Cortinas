@@ -41,8 +41,11 @@ const STEPS = [
       fabricPrice:0,
       headerStyle: '',
       multiplier: 2,
-      necesitaTM: false,
-      ubication: "CABA"
+      necesitaTM: null,
+      cantidadVentanas: 1,
+      ubicationTM: "CABA",
+      necesitaRiel: null,
+      metrosRiel: 0
     });
 
 

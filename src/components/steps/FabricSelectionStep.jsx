@@ -29,7 +29,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       });
   }, []);
 
-  console.log("esto es lo que me devuelve data " , data)
+  // console.log("esto es lo que me devuelve data " , data)
     return (
     <div className="space-y-6">
       <div className="text-center mb-8">

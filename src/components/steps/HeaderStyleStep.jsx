@@ -38,7 +38,7 @@ export const HeaderStyleStep = ({ data, updateData }) => {
     return data.headerStyle === styleId;
   };
 
-  console.log("esto es lo que me devuelve data " , data)
+  // console.log("esto es lo que me devuelve data " , data)
 
   return (
     <div className="space-y-6">

@@ -65,7 +65,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
     updateData({ customWidth: value });
   };
 
-   console.log("esto es lo que me devuelve data " , data)
+  //  console.log("esto es lo que me devuelve data " , data)
 
   return (
     <div className="space-y-8">
