@@ -21,8 +21,6 @@ const BASE_PRICES = {
   CONFECTION_EXTRA: 22000, // Precio para alturas > 2.70m
   RAIL: 19500, // Precio por metro de riel
   INSTALLATION: 25000, // Precio fijo de instalación
-  MEASUREMENT_CABA: 20000, // Toma de medidas en CABA
-  MEASUREMENT_GBA: 30000, // Toma de medidas fuera de CABA
 };
 
 export const QuoteSummaryStep = ({ data, updateData }) => {
@@ -87,6 +85,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
     : Math.ceil(panosNecesarios * anchoNumerico) * precioConfeccion;
   console.log(costoConfeccion);
 
+  /*************RIEL *****************/
   //Costo de riel. si el cliente quiere o no
   const necesitaRiel = !data.hasInstallation && data.railNeeded;
   const metrosRiel = necesitaRiel ? Math.ceil(windowWidth * 1.1) : 0; // +10% para solapamiento
@@ -95,19 +94,6 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
   const rielOptions = [
     { id: "si-riel", label: "Sí, necesito riel/barral" },
     { id: "no-riel", label: "No, ya tengo el riel instalado" },
-  ];
-
-  // Costo de instalación
-  const costoInstalacion = data.hasInstallation ? BASE_PRICES.INSTALLATION : 0;
-
-  //Costo de toma de medidas. que el cliente lo pueda seleccionar
-  // const costoTomaMedidas =
-  //   data.ubicacion === "CABA"
-  //     ? BASE_PRICES.MEASUREMENT_CABA
-  //     : BASE_PRICES.MEASUREMENT_GBA;
-  const tomaMedidasOptions = [
-    { id: "si-tm", label: "Sí, necesito toma de medidas" },
-    { id: "no-tm", label: "No, ya tengo las medidas" },
   ];
 
   // Handlers para Riel
@@ -121,6 +107,25 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
   const handleMetrosRielChange = (value) => {
     updateData({ metrosRiel: Number(value) });
   };
+
+  // Costo de instalación
+  const costoInstalacion = data.hasInstallation ? BASE_PRICES.INSTALLATION : 0;
+
+  /*************TOMA DE MEDIDAS *****************/
+  //Costo de toma de medidas. que el cliente lo pueda seleccionar
+  // const costoTomaMedidas =
+  //   data.ubicacion === "CABA"
+  //     ? BASE_PRICES.MEASUREMENT_CABA
+  //     : BASE_PRICES.MEASUREMENT_GBA;
+  const tomaMedidasOptions = [
+    { id: "si-tm", label: "Sí, necesito toma de medidas" },
+    { id: "no-tm", label: "No necesito rectificar medidas" },
+  ];
+
+  const ubicationOptions = [
+    { id: "CABA", label: "C.A.B.A", cost: 20000 },
+    { id: "GBA", label: "G.B.A", cost: 30000 },
+  ];
 
   // Handlers para Toma de Medidas
 
@@ -142,11 +147,8 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
 
   // Total general
   const subtotal =
-    costoTotalTela +
-    costoConfeccion +
-    costoRiel +
-    costoInstalacion 
-    // costoTomaMedidas;
+    costoTotalTela + costoConfeccion + costoRiel + costoInstalacion;
+  // costoTomaMedidas;
   const total = subtotal;
 
   // Datos para mostrar en la UI
@@ -292,106 +294,116 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                 {index < costItems.length - 1 && <Separator />}
               </div>
             ))}
-              {/* Sección de Toma de Medidas */}
-            {/* <Card className="border-secondary/20 mt-6">
-              <CardContent className="p-6"> */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-secondary/10 rounded-lg">
-                    <Ruler className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <h4 className="text-sm">Toma de medidas</h4>
+            {/* Sección de Toma de Medidas */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <Ruler className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm">Toma de medidas</p>
+                  <p className="text-xs text-muted-foreground">ver</p>
                 </div>
+              </div>
+              <span className="font-semibold">$0</span>
+            </div>
 
-                <div className="space-y-3">
-                  {tomaMedidasOptions.map((option) => (
-                    <div key={option.id}>
-                      <label
-                        className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                          data.necesitaTM === (option.id === "si-tm")
-                            ? "border-secondary bg-secondary/5"
-                            : "border-border hover:bg-muted/50"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="tomaMedidas"
-                          checked={data.necesitaTM === (option.id === "si-tm")}
-                          onChange={() => handleTomaMedidasChange(option.id)}
-                          className="sr-only"
-                        />
-                        {/* Estilo del radio button */}
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                            data.necesitaTM === (option.id === "si-tm")
-                              ? "border-secondary bg-secondary"
-                              : "border-muted-foreground"
-                          }`}
-                        >
-                          {data.necesitaTM === (option.id === "si-tm") && (
-                            <div className="w-2 h-2 bg-secondary-foreground rounded-full mx-auto mt-0.5" />
-                          )}
-                        </div>
-                        <span className="text-sm">{option.label}</span>
-                      </label>
-
-                      {data.necesitaTM === true && option.id === "si-tm" && (
-                        <div className="mt-2 p-4 bg-muted/30 rounded-lg space-y-3">
-                          <div>
-                            <Label
-                              htmlFor="cantidad-ventanas"
-                              className="text-sm font-medium"
-                            >
-                              Cantidad de ventanas
-                            </Label>
-                            <Input
-                              id="cantidad-ventanas"
-                              type="number"
-                              value={data.cantidadVentanas ?? 1}
-                              onChange={(e) =>
-                                handleCantidadVentanasChange(e.target.value)
-                              }
-                              min="1"
-                              className="mt-1"
-                            />
-                          </div>
-
-                          <div>
-                            <Label className="text-sm font-medium block mb-2">
-                              Ubicación
-                            </Label>
-                            <div className="flex gap-3">
-                              <button
-                                type="button"
-                                onClick={() => handleUbicacionChange("CABA")}
-                                className={`px-3 py-1 text-sm rounded-md ${
-                                  data.ubicacionTM === "CABA"
-                                    ? "bg-secondary text-secondary-foreground"
-                                    : "bg-muted"
-                                }`}
-                              >
-                                CABA ($20,000)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleUbicacionChange("GBA")}
-                                className={`px-3 py-1 text-sm rounded-md ${
-                                  data.ubicacionTM === "GBA"
-                                    ? "bg-secondary text-secondary-foreground"
-                                    : "bg-muted"
-                                }`}
-                              >
-                                GBA ($30,000)
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+            <div className="space-y-3">
+              {tomaMedidasOptions.map((option) => (
+                <div key={option.id}>
+                  <label
+                    className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                      data.necesitaTM === (option.id === "si-tm")
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tomaMedidas"
+                      checked={data.necesitaTM === (option.id === "si-tm")}
+                      onChange={() => handleTomaMedidasChange(option.id)}
+                      className="sr-only"
+                    />
+                    {/* Estilo del radio button */}
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                        data.necesitaTM === (option.id === "si-tm")
+                          ? "border-secondary bg-secondary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {data.necesitaTM === (option.id === "si-tm") && (
+                        <div className="w-2 h-2 bg-secondary-foreground rounded-full mx-auto mt-0.5" />
                       )}
                     </div>
-                  ))}
+                    <span className="text-sm">{option.label}</span>
+                  </label>
+
+                  {data.necesitaTM === true && option.id === "si-tm" && (
+                    <div className="mt-2 p-4 bg-muted/30 rounded-lg space-y-3">
+                      <div>
+                        <Label
+                          htmlFor="cantidad-ventanas"
+                          className="text-sm font-medium"
+                        >
+                          Cantidad de ventanas
+                        </Label>
+                        <Input
+                          id="cantidad-ventanas"
+                          type="number"
+                          value={data.cantidadVentanas ?? 1}
+                          onChange={(e) =>
+                            handleCantidadVentanasChange(e.target.value)
+                          }
+                          min="1"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        {ubicationOptions.map((option) => (
+                          <div key={option.id}>
+                            <label
+                              className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                                data.ubicacionTM === option.id
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:bg-muted/50"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="width"
+                                value={option.id}
+                                checked={data.ubicacionTM === option.id}
+                                onChange={() =>
+                                  handleUbicacionChange(option.id)
+                                }
+                                className="sr-only"
+                              />
+                              <div
+                                className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                                  data.ubicacionTM === option.id
+                                    ? "border-primary bg-primary/5"
+                                    : "border-muted-foreground"
+                                }`}
+                              >
+                                {data.ubicacionTM === option.id && (
+                                  <div className="w-2 h-2 bg-accent-foreground rounded-full mx-auto mt-0.5" />
+                                )}
+                              </div>
+                              <div className="">
+                                <span className="text-sm">{option.label}</span>
+                                <span>{option.cost}</span>
+                              </div>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              {/* </CardContent>
+              ))}
+            </div>
+            {/* </CardContent>
             </Card> */}
-          
 
             {/* Sección de Riel */}
             <Card className="border-accent/20 mt-6">

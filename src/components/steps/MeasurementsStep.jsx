@@ -172,7 +172,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
                 <label
                   className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                     data.widthOption === option.id
-                      ? "border-accent bg-accent/5"
+                      ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
                   }`}
                 >
@@ -187,7 +187,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
                   <div
                     className={`w-4 h-4 rounded-full border-2 mr-3 ${
                       data.widthOption === option.id
-                        ? "border-accent bg-accent"
+                        ? "border-primary bg-primary/5"
                         : "border-muted-foreground"
                     }`}
                   >
