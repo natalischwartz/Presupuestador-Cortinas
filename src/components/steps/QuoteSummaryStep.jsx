@@ -55,7 +55,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
   // console.log(anchoNumerico);//devuelve 3
 
   const anchoTelaCubreAlto = data.selectedFabric
-    ? anchoNumerico >= altoConAgregados
+    ? anchoNumerico > altoConAgregados
     : false;
   console.log(anchoTelaCubreAlto); //boolean
 
@@ -147,6 +147,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
   // Handlers para Toma de Medidas
 
   const handleTomaMedidasChange = (optionId) => {
+    console.log(optionId)
     updateData({
       necesitaTM: optionId === "si-tm",
       cantidadVentanas: optionId === "si-tm" ? 1 : undefined,
@@ -253,7 +254,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
         ? "Incluye instalación profesional"
         : "No requiere",
     },
-  ].filter((item) => item.included !== false);
+  ]
 
   return (
     <div className="space-y-6">
@@ -367,7 +368,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                           <Input
                             id="cantidad-ventanas"
                             type="number"
-                            value={data.cantidadVentanas || 1}
+                            // value={data.cantidadVentanas || 1}
                             onChange={(e) =>
                               handleCantidadVentanasChange(e.target.value)
                             }
@@ -481,7 +482,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                           <Input
                             id="cantidad-ventanas-riel"
                             type="number"
-                            value={data.cantidadVentanasRiel || 1}
+                            // value={data.cantidadVentanasRiel || 1}
                             onChange={(e) =>
                               handleCantidadVentanasRielChange(e.target.value)
                             }
@@ -494,7 +495,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                           <p>Metros necesarios: {metrosRiel.toFixed(2)}m</p>
                           <p>
                             (Ancho por ventana:{" "}
-                            {Math.ceil((windowWidth * 1.1) / 0.2) * 0.2}m)
+                            {(Math.ceil((windowWidth) / 0.2) * 0.2).toFixed(2)}m)
                           </p>
                           <p>
                             Precio por metro: $
@@ -592,10 +593,10 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
               ${total.toLocaleString()}
             </span>
           </p>
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <Button variant="outline" className="text-primary bg-white">
+          <div className="grid grid-cols-1 mt-6">
+            {/* <Button variant="outline" className="text-primary bg-white">
               Imprimir presupuesto
-            </Button>
+            </Button> */}
             <Button className="bg-white text-primary hover:bg-white/90">
               Confirmar pedido
             </Button>
