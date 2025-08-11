@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shirt, Info } from "lucide-react";
-import { getProducts } from "@/utils/httpCliente";
+import { SwatchBook, Info } from "lucide-react";
+import { ClipLoader } from "react-spinners";
 import { useEffect, useState } from "react";
 
 
@@ -15,19 +15,29 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       fabricPrice : fabric.price
     });
   };
+  const [cargando, setCargando] = useState(true);
 
   const [products, setDataProducts] = useState([])
   
 
   useEffect(() => {
+
+    setCargando(true)
+
     fetch("http://localhost:3000")
       .then((res) => {
         return res.json();
       })
       .then((data) => {
         setDataProducts(data);
+        setCargando(false) 
       });
   }, []);
+
+  if(cargando){
+    return <ClipLoader className=" flex justify-center"/>
+}
+
 
   // console.log("esto es lo que me devuelve data " , data)
     return (
@@ -56,7 +66,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
                   <div className={`p-2 rounded-lg ${
                     isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary'
                   }`}>
-                    <Shirt className="h-4 w-4" />
+                    <SwatchBook className="h-4 w-4" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
@@ -75,7 +85,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
                     
                     <div className="flex flex-wrap gap-1 mb-2">
                       <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                        {fabric.width}m ancho
+                        {fabric.width}
                       </Badge>
                       <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
                         ${fabric.price}/m

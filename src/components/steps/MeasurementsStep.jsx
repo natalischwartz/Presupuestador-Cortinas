@@ -14,17 +14,17 @@ export const MeasurementsStep = ({ data, updateData }) => {
     ? [
         {
           id: "rod-to-floor",
-          label: "Desde el barral/riel hasta donde termina la cortina",
+          label: "Desde el barral/riel hasta donde se quiere que llegue la cortina",
         },
       ]
     : [
         {
           id: "rod-to-floor",
-          label: "Del taparollo hasta donde llega la cortina",
+          label: "Del taparollo hasta donde se quiere que llegue la cortina",
         },
         {
           id: "ceiling-to-floor",
-          label: "Del techo hasta donde llega la cortina",
+          label: "Del techo hasta donde se quiere que llegue la cortina",
         },
         { id: "custom", label: "Altura personalizada" },
       ];
@@ -33,7 +33,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
     ? [
         {
           id: "rail-width",
-          label: "Medida total del riel o barral (punta a punta)",
+          label: "Medida total del riel o barral ( medido de punta a punta)",
         },
       ]
     : [
@@ -133,7 +133,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
                     <Input
                       id={`height-input-${option.id}`}
                       type="number"
-                      value={data.customHeight ?? ""}
+                      // value={data.customHeight ?? ""}
                       onChange={(e) => {
                         const value =
                           e.target.value === ""
@@ -143,7 +143,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
                       }}
                       className="mt-2"
                       placeholder={`Ej: ${
-                        option.id === "standard" ? "210" : "250"
+                        option.id === "standard" ? "2.10" : "2.50"
                       }`}
                       min="0"
                       step="0.01"
@@ -235,15 +235,18 @@ export const MeasurementsStep = ({ data, updateData }) => {
         </CardContent>
       </Card>
 
-      {data.heightOption && data.widthOption && (
-        <div className="text-center p-4 bg-success/10 rounded-lg border border-success/20">
-          <Ruler className="h-5 w-5 text-success mx-auto mb-2" />
-          <p className="text-success-foreground text-sm">
-            Medidas registradas correctamente. Podés continuar al siguiente
-            paso.
-          </p>
-        </div>
-      )}
+      {data.heightOption &&
+        data.widthOption &&
+        data.customHeight &&
+        data.customWidth && (
+          <div className="text-center p-4 bg-success/10 rounded-lg border border-success/20">
+            <Ruler className="h-5 w-5 text-success mx-auto mb-2" />
+            <p className="text-success-foreground text-sm">
+              Medidas registradas correctamente. Podés continuar al siguiente
+              paso.
+            </p>
+          </div>
+        )}
     </div>
   );
 };

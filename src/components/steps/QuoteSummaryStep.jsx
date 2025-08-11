@@ -264,6 +264,23 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
           Detalle completo de tu cotización
         </p>
       </div>
+      <div className="quote-summary space-y-6">
+  
+        <div className="customer-info-summary bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Información de Contacto</h3>
+        
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Nombre</p>
+              <p className="font-medium text-gray-800">{data.customerInfo.name || 'No proporcionado'}</p>
+            </div>
+          
+            <div>
+              <p className="text-sm text-gray-500">Teléfono</p>
+              <p className="font-medium text-gray-800">{data.customerInfo.phone || 'No proporcionado'}</p>
+            </div>
+          </div>
+        </div>
 
       {/* Resumen técnico */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -604,5 +621,6 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
         </CardContent>
       </Card>
     </div>
+  </div>
   );
 };

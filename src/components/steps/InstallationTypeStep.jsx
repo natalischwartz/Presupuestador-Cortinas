@@ -17,9 +17,9 @@ export const InstallationTypeStep = ({ data, updateData }) => {
     {
       id: true,
       title: "Sin sistema instalado",
-      description: "Necesitás instalación completa/ ver instructivo",
+      description: "Necesitás instalación completa",
       icon: Wrench,
-      details: "Incluye riel, soportes e instalación",
+      details: "Puede incluir riel, soportes e instalación",
     },
   ];
 

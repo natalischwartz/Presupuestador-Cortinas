@@ -29,6 +29,10 @@ const STEPS = [
 
     //muestra la estructura de datos que se recolectaría en el proceso.
     const [data, setData] = useState({
+      customerInfo: {
+          name: '',
+          phone: '',
+      },
       curtainType: null,
       hasInstallation: null,
       heightOption: null,
@@ -40,6 +44,7 @@ const STEPS = [
       fabricName:"",
       fabricPrice:0,
       headerStyle: '',
+      headerType: undefined,
       multiplier: 2,
       necesitaTM: null,
       ubicationTM: "CABA",
