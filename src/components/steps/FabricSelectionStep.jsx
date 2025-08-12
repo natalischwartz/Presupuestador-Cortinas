@@ -24,7 +24,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
 
     setCargando(true)
 
-    fetch("http://localhost:3000")
+    fetch(import.meta.env.VITE_API_URL)
       .then((res) => {
         return res.json();
       })

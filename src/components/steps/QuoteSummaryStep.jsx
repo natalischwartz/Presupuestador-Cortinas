@@ -643,11 +643,11 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                 ${total.toLocaleString()}
               </span>
             </p>
-            <div className="grid grid-cols-1 mt-6">
+            <div className="flex justify-center">
               {/* <Button variant="outline" className="text-primary bg-white">
               Imprimir presupuesto
             </Button> */}
-              <Button className="bg-white text-primary hover:bg-white/90">
+              <Button className=" bg-white text-primary hover:bg-white/90">
                 Confirmar pedido
               </Button>
             </div>
