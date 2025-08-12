@@ -14,7 +14,8 @@ export const MeasurementsStep = ({ data, updateData }) => {
     ? [
         {
           id: "rod-to-floor",
-          label: "Desde el barral/riel hasta donde se quiere que llegue la cortina",
+          label:
+            "Desde el barral/riel hasta donde se quiere que llegue la cortina",
         },
       ]
     : [
@@ -132,21 +133,24 @@ export const MeasurementsStep = ({ data, updateData }) => {
                     </Label>
                     <Input
                       id={`height-input-${option.id}`}
-                      type="number"
-                      // value={data.customHeight ?? ""}
+                      type="text"
+                      value={data.customHeight ?? ""}
                       onChange={(e) => {
-                        const value =
-                          e.target.value === ""
-                            ? undefined
-                            : Number(e.target.value);
-                        handleCustomHeightChange(value);
+                        const value = e.target.value;
+                        // Permite números con punto o coma decimal
+                        if (
+                          value === "" ||
+                          /^[0-9]*([.,][0-9]{0,2})?$/.test(value)
+                        ) {
+                          // Reemplaza comas por puntos para consistencia
+                          const normalizedValue = value.replace(",", ".");
+                          handleCustomHeightChange(normalizedValue);
+                        }
                       }}
                       className="mt-2"
-                      placeholder={`Ej: ${
-                        option.id === "standard" ? "2.10" : "2.50"
-                      }`}
-                      min="0"
-                      step="0.01"
+                      placeholder="Ej: 3,00 o 3.00"
+                      // min="0"
+                      // step="0.01"
                     />
                   </div>
                 )}
@@ -213,19 +217,20 @@ export const MeasurementsStep = ({ data, updateData }) => {
                     </Label>
                     <Input
                       id={`width-input-${option.id}`}
-                      type="number"
+                      type="text"
                       value={data.customWidth ?? ""}
                       onChange={(e) => {
-                        const value =
-                          e.target.value === ""
-                            ? undefined
-                            : Number(e.target.value);
-                        handleCustomWidthChange(value);
+                        const value = e.target.value;
+                        if (
+                          value === "" ||
+                          /^[0-9]*([.,][0-9]{0,2})?$/.test(value)
+                        ) {
+                          const normalizedValue = value.replace(",", ".");
+                          handleCustomWidthChange(normalizedValue);
+                        }
                       }}
                       className="mt-2"
                       placeholder="Ej: 2.00"
-                      min="0"
-                      step="0.01"
                     />
                   </div>
                 )}

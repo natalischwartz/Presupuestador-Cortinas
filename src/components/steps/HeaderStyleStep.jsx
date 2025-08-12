@@ -107,7 +107,6 @@ export const HeaderStyleStep = ({ data, updateData }) => {
       </div>
 
       {/* Style Selection para barral - solo si tiene instalación */}
-      {data.hasInstallation && (
         <div className="space-y-4">
           <h4 className="text-lg font-medium">
             Estilos disponibles para barral
@@ -123,7 +122,7 @@ export const HeaderStyleStep = ({ data, updateData }) => {
             ))}
           </div>
         </div>
-      )}
+      
 
       {data.headerStyle && (
         <div className="text-center p-4 bg-success/10 rounded-lg border border-success/20">
