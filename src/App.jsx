@@ -17,7 +17,7 @@ en algun otro archivo usara : import { Link } from 'react-router-dom';
 /*Resumen:     React Query maneja los datos.
     React Router maneja las vistas.
     Juntas: Permiten apps con datos persistentes y navegación fluida.*/
-
+import { Watermark } from './components/Watermark';
 import Index from './pages/Index'
 
 
@@ -37,6 +37,7 @@ function App() {
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
+         <Watermark />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

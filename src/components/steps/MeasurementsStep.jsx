@@ -6,41 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Ruler, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 
 export const MeasurementsStep = ({ data, updateData }) => {
-  //estos estados locales ya estan en data como estados globales.
-  // const [customHeight, setCustomHeight] = useState(data.customHeight || 0);
-  // const [customWidth, setCustomWidth] = useState(data.customWidth || 0);
 
   const heightOptions = data.hasInstallation
     ? [
         {
           id: "rod-to-floor",
-          label:
-            "Desde el barral/riel hasta donde se quiere que llegue la cortina",
-        },
-      ]
-    : [
-        {
-          id: "rod-to-floor",
-          label: "Del taparollo hasta donde se quiere que llegue la cortina",
+          label: "Altura desde el taparrollos instalado hasta el largo final deseado de la cortina",
         },
         {
           id: "ceiling-to-floor",
           label: "Del techo hasta donde se quiere que llegue la cortina",
         },
         { id: "custom", label: "Altura personalizada" },
-      ];
+      ]
+    :  [
+        {
+          id: "rod-to-floor",
+          label:
+            "Medir desde el riel o barral hasta el punto deseado donde finalizará la cortina",
+        },
+      ]
+
+
 
   const widthOptions = data.hasInstallation
     ? [
-        {
-          id: "rail-width",
-          label: "Medida total del riel o barral ( medido de punta a punta)",
-        },
-      ]
-    : [
         { id: "window-plus", label: "Marco de ventana + 10 cm a cada lado" },
         { id: "wall-to-wall", label: "De pared a pared" },
-      ];
+      ]
+    : [
+        {
+          id: "rail-width",
+          label: "Longitud total del sistema de riel/barral, medida entre los extremos",
+        },
+      ]
 
   //cambia la opcion de altura
   const handleHeightChange = (optionId) => {
@@ -129,7 +128,7 @@ export const MeasurementsStep = ({ data, updateData }) => {
                     >
                       {option.id === "custom"
                         ? "Altura personalizada (metros)"
-                        : `Ingrese medida para ${option.label} (metros)`}
+                        : `${option.label} (metros)`}
                     </Label>
                     <Input
                       id={`height-input-${option.id}`}
