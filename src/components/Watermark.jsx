@@ -12,7 +12,7 @@ export const Watermark = () => {
         />
       </div>
 
-      <div className=" flex justify-center pointer-events-none z-[9999] will-change-transform">
+      <div className="flex justify-center pointer-events-none z-[9999] will-change-transform">
         <div className="flex items-center gap-2">
           <img
             src={logo}
@@ -27,7 +27,7 @@ export const Watermark = () => {
       </div>
 
       {/* 3. Marca superior izquierda (mínima) */}
-      <div className="fixed top-6 left-6 pointer-events-none z-[9999] opacity-15">
+      <div className="fixed top-3 left-6 pointer-events-none z-[9999] opacity-15">
         <img src={logo} alt="" className="w-10  rotate-[-12deg]" />
       </div>
     </>

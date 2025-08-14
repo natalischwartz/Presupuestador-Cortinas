@@ -118,7 +118,7 @@ const STEPS = [
               </span>
             </div>
             <Progress value={progress} className="mb-4" />
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-xs gap-1 text-muted-foreground">
               {STEPS.map((step, index) => (
                 <span
                   key={step.id}
