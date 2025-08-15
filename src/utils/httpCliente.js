@@ -14,3 +14,4 @@ export const getProducts = async () => {
   }
 };
 
+// console.log(dataProducts)

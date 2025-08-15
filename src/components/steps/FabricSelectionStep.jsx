@@ -78,6 +78,10 @@ export const FabricSelectionStep = ({ data, updateData }) => {
                         </div>
                       )}
                     </div>
+
+                    <div className="w-40">
+                      <img src={fabric.image.secure_url} />
+                    </div>
                     
                     <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                       {fabric.description}
