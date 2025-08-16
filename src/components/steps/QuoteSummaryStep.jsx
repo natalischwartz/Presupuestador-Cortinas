@@ -51,20 +51,20 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
 
   // 2. Cálculo de tela necesaria
   const anchoConMultiplicadorDeCabezal = windowWidth * data.multiplier;
-  // console.log(anchoConMultiplicadorDeCabezal);
+  console.log(anchoConMultiplicadorDeCabezal);
   const altoConAgregados = windowHeight + 0.3 + 0.1; // + dobladillo + cabezal
   // console.log(altoConAgregados)
 
   // Verificar si el ancho de la tela cubre el alto necesario
   //hay que pasar el data.fabricWidth a solo numero asi compara
 
-  const anchoNumerico = parseInt(data.fabricWidth); // Esto funciona porque parseInt lee hasta el primer caracter no numérico
+  const anchoNumerico = parseFloat(data.fabricWidth);
   // console.log(anchoNumerico);//devuelve 3
 
   const anchoTelaCubreAlto = data.selectedFabric
     ? anchoNumerico > altoConAgregados
     : false;
-  console.log(anchoTelaCubreAlto); //boolean
+  // console.log(anchoTelaCubreAlto); //boolean
 
   let metrosTelaNecesarios = 0;
   let panosNecesarios = 1;
