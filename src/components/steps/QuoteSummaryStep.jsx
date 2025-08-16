@@ -644,9 +644,10 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
               </span>
             </p>
             <div className="flex justify-center">
-              {/* <Button variant="outline" className="text-primary bg-white">
+              <Button variant="outline" className="text-primary bg-white"
+               onClick={() => window.print()}>
               Imprimir presupuesto
-            </Button> */}
+            </Button>
               <Button className=" bg-white text-primary hover:bg-white/90">
                 Confirmar pedido
               </Button>
