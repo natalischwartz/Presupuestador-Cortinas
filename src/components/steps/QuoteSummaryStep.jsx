@@ -69,9 +69,14 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
   let metrosTelaNecesarios = 0;
   let panosNecesarios = 1;
 
+  //Para redondear al múltiplo de 0.5 más cercano (hacia arriba)
+  function roundToHalf(value) {
+  return Math.ceil(value * 2) / 2;
+}
+
   if (anchoTelaCubreAlto) {
     // Caso 1: El ancho de la tela cubre el alto
-    metrosTelaNecesarios = Math.ceil(anchoConMultiplicadorDeCabezal);
+    metrosTelaNecesarios = roundToHalf(anchoConMultiplicadorDeCabezal);
     // console.log(metrosTelaNecesarios);
   } else {
     // Caso 2: Necesitamos calcular paños
