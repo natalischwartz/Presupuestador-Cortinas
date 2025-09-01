@@ -15,9 +15,9 @@ export const CurtainTypeStep = ({ data, updateData }) => {
     {
       id: "roller",
       title: "Cortinas Roller",
-      description: "Sistema enrollable con mecanismo de cadena o motor",
+      description: "Sistema enrollable con mecanismo de cadena",
       icon: RotateCcw,
-      available: false, // no disponible
+      available: true,
     },
     // ver doble cortinado
     {
@@ -152,7 +152,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
         })}
       </div>
 
-      {!options.find((opt) => opt.available && opt.id === data.curtainType) &&
+      {/* {!options.find((opt) => opt.available && opt.id === data.curtainType) &&
         data.curtainType === "roller" && (
           <div className="text-center p-4 bg-warning/10 rounded-lg border border-warning/20">
             <p className="text-warning-foreground">
@@ -160,7 +160,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
               podés cotizar cortinas tradicionales.
             </p>
           </div>
-        )}
+        )} */}
     </div>
   );
 };

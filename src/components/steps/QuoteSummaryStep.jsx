@@ -550,10 +550,10 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                                 )}
                                 m)
                               </p>
-                              <p>
+                              {/* <p>
                                 Precio por metro: $
                                 {BASE_PRICES.RAIL.toLocaleString()}
-                              </p>
+                              </p> */}
                             </div>
                           </div>
                         )}

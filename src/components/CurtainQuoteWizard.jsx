@@ -27,7 +27,7 @@ const STEPS = [
     const [currentStep,setCurrentStep] = useState(0) //Valor inicial: 0 (primer paso del array)
 
 
-    //muestra la estructura de datos que se recolectaría en el proceso.
+     //muestra la estructura de datos que se recolectaría en el proceso.
     const [data, setData] = useState({
       customerInfo: {
           name: '',
@@ -54,26 +54,67 @@ const STEPS = [
       metrosRiel: 0
     });
 
+    // Determinar qué pasos mostrar según el tipo de cortina
+            const getFilteredSteps = () => {
+                if (data.curtainType === 'roller') {
+                    // Para roller: Tipo -> Medidas -> Tela -> Presupuesto
+                    return STEPS.filter(step => 
+                        step.id === 'curtain-type' || 
+                        step.id === 'measurements' || 
+                        step.id === 'fabric' || 
+                        step.id === 'summary'
+                    );
+                }
+                return STEPS;
+            };
 
-    const progress = ((currentStep + 1) / STEPS.length) * 100;
-    const CurrentStepComponent = STEPS[currentStep].component;
+            const filteredSteps = getFilteredSteps();
 
-    const canProceed = () => {
-      switch (currentStep) {
-        case 0: return data.curtainType !== null;
-        case 1: return data.hasInstallation !== null;
-        case 2: 
-         return data.heightOption && data.widthOption && 
-         (data.customHeight !== undefined || data.heightOption !== 'custom') && 
-         (data.customWidth !== undefined || data.widthOption !== 'custom');
-        case 3: return data.selectedFabric;
-        case 4: return data.headerStyle;
-        default: return true;
-      }
+   
+
+    const progress = ((currentStep + 1) / filteredSteps.length) * 100;
+    const CurrentStepComponent = filteredSteps[currentStep].component;
+
+
+     const canProceed = () => {
+        // Usamos el ID del paso actual en lugar del índice numérico
+        // ya que los índices pueden cambiar con los pasos filtrados
+        const currentStepId = filteredSteps[currentStep].id;
+        
+        switch (currentStepId) {
+            case 'curtain-type': 
+                return data.curtainType !== null;
+            case 'installation': 
+                return data.hasInstallation !== null;
+            case 'measurements': 
+                return data.heightOption && data.widthOption && 
+                    (data.customHeight !== undefined || data.heightOption !== 'custom') && 
+                    (data.customWidth !== undefined || data.widthOption !== 'custom');
+            case 'fabric': 
+                return data.selectedFabric;
+            case 'header': 
+                return data.headerStyle;
+            default: 
+                return true;
+        }
     };
 
+    // const canProceed = () => {
+    //   switch (currentStep) {
+    //     case 0: return data.curtainType !== null;
+    //     case 1: return data.hasInstallation !== null;
+    //     case 2: 
+    //      return data.heightOption && data.widthOption && 
+    //      (data.customHeight !== undefined || data.heightOption !== 'custom') && 
+    //      (data.customWidth !== undefined || data.widthOption !== 'custom');
+    //     case 3: return data.selectedFabric;
+    //     case 4: return data.headerStyle;
+    //     default: return true;
+    //   }
+    // };
+
     const handleNext = () => {
-      if (currentStep < STEPS.length - 1 && canProceed()) {
+      if (currentStep < filteredSteps.length - 1 && canProceed()) {
         setCurrentStep(currentStep + 1);
       }
     };
@@ -111,7 +152,7 @@ const STEPS = [
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-muted-foreground">
-                Paso {currentStep + 1} de {STEPS.length}
+                Paso {currentStep + 1} de {filteredSteps.length}
               </span>
               <span className="text-sm font-medium text-primary">
                 {Math.round(progress)}% completado
@@ -119,7 +160,7 @@ const STEPS = [
             </div>
             <Progress value={progress} className="mb-4" />
             <div className="flex justify-between text-xs gap-1 text-muted-foreground">
-              {STEPS.map((step, index) => (
+              {filteredSteps.map((step, index) => (
                 <span
                   key={step.id}
                   className={`${
@@ -137,7 +178,7 @@ const STEPS = [
         <Card className="shadow-elegant">
           <CardHeader className="bg-gradient-warm">
             <CardTitle className="text-2xl text-center">
-              {STEPS[currentStep].title}
+              {filteredSteps[currentStep].title}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
@@ -160,7 +201,7 @@ const STEPS = [
             Anterior
           </Button>
 
-          {currentStep < STEPS.length - 1 ? (
+          {currentStep < filteredSteps.length - 1 ? (
             <Button
               onClick={handleNext}
               disabled={!canProceed()}

@@ -1,14 +1,14 @@
-import logo from "/Imagenes/logo-decoronce-op2.png";
+import logo from "/Imagenes/estilo-cortina.jpg";
 
 export const Watermark = () => {
   return (
     <>
       {/* 1. Marca central (sutil) */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999] opacity-5 hover:opacity-20 transition-opacity duration-300">
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999] opacity-20 hover:opacity-100 transition-opacity duration-300">
         <img
           src={logo}
           alt=""
-          className="w-1/3 max-w-[100px] grayscale contrast-75 rotate-[-8deg]"
+          className="w-1/3 max-w-[100px]  contrast-75 rotate-[-8deg]"
         />
       </div>
 
@@ -17,7 +17,7 @@ export const Watermark = () => {
           <img
             src={logo}
             alt="Marca registrada"
-            className="w-12 h-auto"
+            className="w-20 h-25"
             draggable="false"
           />
           <span className="text-xs font-medium text-gray-500/80 whitespace-nowrap select-none">
@@ -28,7 +28,7 @@ export const Watermark = () => {
 
       {/* 3. Marca superior izquierda (mínima) */}
       <div className="fixed top-3 left-6 pointer-events-none z-[9999] opacity-15">
-        <img src={logo} alt="" className="w-10  rotate-[-12deg]" />
+        <img src={logo} alt="" className="w-20  rotate-[-12deg]" />
       </div>
     </>
   );
