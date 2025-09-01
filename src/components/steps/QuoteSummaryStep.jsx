@@ -578,14 +578,16 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
           <Card className="bg-accent/5 border-accent/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-3">
-                <Info className="h-4 w-4 text-accent" />
+                <Info className="h-4 w-4 text-success" />
                 <h4 className="font-semibold text-sm">Notas importantes</h4>
               </div>
               <ul className="text-xs text-muted-foreground space-y-2">
                 <li className="flex items-start gap-2">
                   <span>•</span>
                   <span>
-                    La toma de medidas requiere seña del 50% y tiene un costo de
+                    Para señar el trabajo se solicita el 50% del total.
+                    <br />
+                    La toma de medidas se realiza previa seña de cortinas  y tiene un costo de
                     ${/* {costoMedidas.toLocaleString()}{" "} */}
                     {data.ubicacionTM === "CABA"
                       ? BASE_PRICES.MEASUREMENT_CABA
@@ -648,7 +650,7 @@ export const QuoteSummaryStep = ({ data, updateData }) => {
                 ${total.toLocaleString()}
               </span>
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-wrap justify-center gap-3">
               <Button variant="outline" className="text-primary bg-white"
                onClick={() => window.print()}>
               Imprimir presupuesto
