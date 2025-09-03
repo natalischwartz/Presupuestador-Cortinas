@@ -1,4 +1,4 @@
-import logo from "/Imagenes/estilo-cortina.jpg";
+import logo from "/Imagenes/estilo-cortina2.jpg";
 
 export const Watermark = () => {
   return (
