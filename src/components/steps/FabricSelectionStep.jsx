@@ -5,7 +5,32 @@ import { ClipLoader } from "react-spinners";
 import { useEffect, useState } from "react";
 
 
+
 export const FabricSelectionStep = ({ data, updateData }) => {
+
+
+   const rollerFabrics = [
+    {
+      _id: "roller-screen",
+      name: "Roller Screen",
+      description: "Tela traslúcida que permite el paso de luz natural mientras brinda privacidad",
+      width: "2.50m",
+      price: Number(import.meta.env.VITE_ROLLER_SCREEN_PRICE),
+      image: {
+        secure_url: "/Imagenes/colores-roller-sunscreen.jpg" // Ruta a tu imagen
+      }
+    },
+    {
+      _id: "roller-blackout",
+      name: "Roller Blackout",
+      description: "Tela opaca que bloquea completamente la luz exterior, ideal para dormitorios",
+      width: "2.50m",
+      price:  Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
+      image: {
+        secure_url: "Imagenes/colores-blackout-roller.jpg" // Ruta a tu imagen
+      }
+    }
+  ];
 
     const handleFabricSelect = (fabric) => {
     updateData({
@@ -22,7 +47,9 @@ export const FabricSelectionStep = ({ data, updateData }) => {
 
   useEffect(() => {
 
-    setCargando(true)
+    //Solo hacer fetch si son cortinas tradicionales
+    if (data.curtainType !== 'roller'){
+      setCargando(true)
 
     fetch(import.meta.env.VITE_API_URL)
       .then((res) => {
@@ -32,25 +59,36 @@ export const FabricSelectionStep = ({ data, updateData }) => {
         setDataProducts(data);
         setCargando(false) 
       });
-  }, []);
+    }else{
+        // Para roller, no necesitamos cargar desde la API
+      setCargando(false);
+    }
+  }, [data.curtainType]);
 
-  if(cargando){
-    return <ClipLoader className=" flex justify-center"/>
-}
+   // Determinar qué telas mostrar
+  const fabricsToShow = data.curtainType === 'roller' ? rollerFabrics : products;
 
+
+if (cargando && data.curtainType !== 'roller') {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <ClipLoader size={40} color="#3E6553" />
+      </div>
+    );
+  }
 
   // console.log("esto es lo que me devuelve data " , data)
     return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold mb-2">Seleccioná el tipo de tela</h3>
+        <h3 className="text-xl font-semibold mb-2">{data.curtainType === 'roller' ? 'Seleccioná el tipo de tela roller' : 'Seleccioná el tipo de tela'}</h3>
         <p className="text-muted-foreground">
           Cada tela tiene características y precios diferentes
         </p>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((fabric) => {
+        {fabricsToShow.map((fabric) => {
           const isSelected = data.selectedFabric === fabric._id;
           
           return (
@@ -78,9 +116,17 @@ export const FabricSelectionStep = ({ data, updateData }) => {
                         </div>
                       )}
                     </div>
+                    <div className="w-40 h-40 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                        {fabric.image?.secure_url?(
+                      <img src={fabric.image.secure_url} 
+                      alt={fabric.name}
+                      className="w-full h-full object-cover" />
 
-                    <div className="w-40">
-                      <img src={fabric.image.secure_url} />
+                    ):
+                      <div className="text-muted-foreground text-sm">
+                        Imagen no disponible
+                      </div>
+                  }
                     </div>
                     
                     <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
@@ -111,8 +157,10 @@ export const FabricSelectionStep = ({ data, updateData }) => {
               <div>
                 <h4 className="font-semibold text-sm mb-1">Optimización automática</h4>
                 <p className="text-xs text-muted-foreground">
-                  Si el alto de tu ventana es menor a 2.60m y el ancho de la tela es mayor, 
-                  usaremos el ancho de la tela como alto para optimizar el corte y reducir desperdicios.
+                {data.curtainType === 'roller' 
+                    ? 'Las telas roller están especialmente diseñadas para sistemas de enrollado, con tratamientos anti-UV y mayor resistencia.'
+                    : 'Si el alto de tu ventana es menor a 2.60m y el ancho de la tela es mayor, usaremos el ancho de la tela como alto para optimizar el corte y reducir desperdicios.'
+                  }
                 </p>
               </div>
             </div>

@@ -34,15 +34,15 @@ const STEPS = [
           phone: '',
       },
       curtainType: null,
-      hasInstallation: null,
+      hasInstallation: null, //
       heightOption: null,
       widthOption: null,
-      customHeight: undefined,
-      customWidth: undefined,
-      selectedFabric: '',
-      fabricWidth: 0,
-      fabricName:"",
-      fabricPrice:0,
+      customHeight: undefined, //
+      customWidth: undefined, //
+      selectedFabric: '', //
+      fabricWidth: 0, //
+      fabricName:"", //
+      fabricPrice:0, //
       headerStyle: '',
       headerType: undefined,
       multiplier: 2,
@@ -205,7 +205,7 @@ const STEPS = [
             <Button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="flex items-center gap-2 bg-gradient-primary"
+              className="flex items-center gap-2 bg-gradient-warm text-white"
             >
               Siguiente
               <ChevronRight className="h-4 w-4" />

@@ -1,10 +1,16 @@
+import { Buffer } from 'buffer';
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx'
+import App from './App.jsx';
+
+// Polyfill para Buffer en el navegador
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
 
 createRoot(document.getElementById('root')).render(
-  // <StrictMode>
+  <StrictMode>
     <App />
-  // </StrictMode>,
+  </StrictMode>,
 )

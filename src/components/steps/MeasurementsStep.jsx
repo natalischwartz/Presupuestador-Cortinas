@@ -6,12 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Ruler, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 
 export const MeasurementsStep = ({ data, updateData }) => {
+  //determinar si se selecciono cortinas roller
 
-  const heightOptions = data.hasInstallation
+  const isRoller = data.curtainType === "roller";
+
+  // Opciones de altura según el tipo de cortina
+
+  const heightOptions = isRoller
+    ? [
+        {
+          id: "window-height-plus",
+          label: "Alto de la ventana + 10 cm a cada lado",
+        },
+      ]
+    : data.hasInstallation
     ? [
         {
           id: "rod-to-floor",
-          label: "Altura desde el taparrollos instalado hasta el largo final deseado de la cortina",
+          label:
+            "Altura desde el taparrollos instalado hasta el largo final deseado de la cortina",
         },
         {
           id: "ceiling-to-floor",
@@ -19,17 +32,24 @@ export const MeasurementsStep = ({ data, updateData }) => {
         },
         { id: "custom", label: "Altura personalizada" },
       ]
-    :  [
+    : [
         {
           id: "rod-to-floor",
           label:
             "Medir desde el riel o barral hasta el punto deseado donde finalizará la cortina",
         },
+      ];
+
+  // Opciones de ancho según el tipo de cortina
+
+  const widthOptions = isRoller
+    ? [
+        {
+          id: "window-width-plus",
+          label: "Ancho de la ventana + 10 cm a cada lado",
+        },
       ]
-
-
-
-  const widthOptions = data.hasInstallation
+    : data.hasInstallation
     ? [
         { id: "window-plus", label: "Marco de ventana + 10 cm a cada lado" },
         { id: "wall-to-wall", label: "De pared a pared" },
@@ -37,9 +57,10 @@ export const MeasurementsStep = ({ data, updateData }) => {
     : [
         {
           id: "rail-width",
-          label: "Longitud total del sistema de riel/barral, medida entre los extremos",
+          label:
+            "Longitud total del sistema de riel/barral, medida entre los extremos",
         },
-      ]
+      ];
 
   //cambia la opcion de altura
   const handleHeightChange = (optionId) => {
@@ -70,9 +91,14 @@ export const MeasurementsStep = ({ data, updateData }) => {
   return (
     <div className="space-y-8">
       <div className="text-center mb-8">
-        <h3 className="text-xl font-semibold mb-2">Ingresá las medidas</h3>
+        <h3 className="text-xl font-semibold mb-2">
+          {isRoller ? "Medidas para Cortinas Roller" : "Ingresá las medidas"}
+        </h3>
         <p className="text-muted-foreground">
-          Necesitamos las medidas exactas para calcular la cantidad de tela
+          {isRoller 
+            ? "Para cortinas roller, calculamos automáticamente el tamaño añadiendo 10 cm a cada lado de la ventana"
+            : "Necesitamos las medidas exactas para calcular la cantidad de tela"
+          }
         </p>
       </div>
 
@@ -83,7 +109,9 @@ export const MeasurementsStep = ({ data, updateData }) => {
             <div className="p-2 bg-primary/10 rounded-lg">
               <ArrowUpDown className="h-5 w-5 text-primary" />
             </div>
-            <h4 className="text-lg font-semibold">Alto de la cortina</h4>
+            <h4 className="text-lg font-semibold">
+              {isRoller?"Alto cortina Roller":"Alto cortina tradicional"}
+            </h4>
           </div>
 
           <div className="space-y-3">
@@ -126,9 +154,12 @@ export const MeasurementsStep = ({ data, updateData }) => {
                       htmlFor={`height-input-${option.id}`}
                       className="text-sm font-medium"
                     >
-                      {option.id === "custom"
+                      {isRoller 
+                        ? "Alto de la ventana (metros)" 
+                        : option.id === "custom"
                         ? "Altura personalizada (metros)"
-                        : `${option.label} (metros)`}
+                        : `${option.label} (metros)`
+                      }
                     </Label>
                     <Input
                       id={`height-input-${option.id}`}
@@ -148,9 +179,11 @@ export const MeasurementsStep = ({ data, updateData }) => {
                       }}
                       className="mt-2"
                       placeholder="Ej: 3,00 o 3.00"
-                      // min="0"
-                      // step="0.01"
                     />
+                    {isRoller && data.customHeight && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        La medida del alto es {(parseFloat(data.customHeight) + 0.2).toFixed(2)} m 
+                        (ventana + 10 cm arriba + 10 cm abajo)</p>)}
                   </div>
                 )}
               </div>
@@ -166,7 +199,9 @@ export const MeasurementsStep = ({ data, updateData }) => {
             <div className="p-2 bg-accent/10 rounded-lg">
               <ArrowLeftRight className="h-5 w-5 text-accent-foreground" />
             </div>
-            <h4 className="text-lg font-semibold">Ancho de la cortina</h4>
+            <h4 className="text-lg font-semibold">
+              {isRoller ? "Ancho de la cortina roller" : "Ancho de la cortina"}
+            </h4>
           </div>
 
           <div className="space-y-3">
@@ -208,11 +243,14 @@ export const MeasurementsStep = ({ data, updateData }) => {
                       htmlFor={`width-input-${option.id}`}
                       className="text-sm font-medium"
                     >
-                      {option.id === "wall-to-wall"
+                     {isRoller 
+                        ? "Ancho de la ventana (metros)" 
+                        : option.id === "wall-to-wall"
                         ? "Distancia pared a pared (m)"
                         : option.id === "rail-width"
                         ? "Medida del riel/barral (m)"
-                        : `Ingrese ancho para ${option.label} (m)`}
+                        : `Ingrese ancho para ${option.label} (m)`
+                      }
                     </Label>
                     <Input
                       id={`width-input-${option.id}`}
@@ -231,6 +269,14 @@ export const MeasurementsStep = ({ data, updateData }) => {
                       className="mt-2"
                       placeholder="Ej: 2.00"
                     />
+
+                     {isRoller && data.customWidth && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        La medida del ancho es {(parseFloat(data.customWidth) + 0.2).toFixed(2)} m 
+                        (ventana + 10 cm a cada lado)
+                      </p>
+                    )}
+
                   </div>
                 )}
               </div>
