@@ -1,8 +1,7 @@
 import { CurtainQuoteWizard } from "@/components/CurtainQuoteWizard"
 
-
-const Index = () => {
+const CreateWindowPage = () => {
     return <CurtainQuoteWizard />;
 };
 
-export default Index;
+export default CreateWindowPage;

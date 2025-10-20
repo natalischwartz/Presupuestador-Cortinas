@@ -48,7 +48,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
               type="text"
               id="customerName"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              value={data.customerInfo.name}
+              value={data.customerInfo?.name || ''}
               onChange={(e) =>
                 updateData({
                   customerInfo: {
@@ -73,7 +73,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
               type="tel"
               id="customerPhone"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              value={data.customerInfo.phone}
+              value={data.customerInfo?.phone || '' }
               onChange={(e) =>
                 updateData({
                   customerInfo: {
@@ -119,7 +119,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
                   <div
                     className={`p-3 rounded-lg ${
                       isSelected
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-secondary"
                     }`}
                   >

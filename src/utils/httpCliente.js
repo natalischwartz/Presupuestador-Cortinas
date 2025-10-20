@@ -1,4 +1,10 @@
+import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 const API = import.meta.env.VITE_API_URL;
+
+const api = axios.create({
+  baseURL: API,
+});
 
 export const getProducts = async () => {
   try {
@@ -15,3 +21,30 @@ export const getProducts = async () => {
 };
 
 // console.log(dataProducts)
+
+// Interceptor para agregar token automáticamente
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para manejar tokens expirados
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authAPI = {
+  login: (email, password) => api.post('/login', { email, password }),
+};
+
+export default api;

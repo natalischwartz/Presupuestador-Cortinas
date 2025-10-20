@@ -53,7 +53,7 @@ export const InstallationTypeStep = ({ data, updateData }) => {
                   <div
                     className={`p-3 rounded-lg ${
                       isSelected
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-secondary"
                     }`}
                   >
