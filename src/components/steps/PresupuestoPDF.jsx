@@ -6,29 +6,29 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    padding: 20,
+    padding: 15,
     fontFamily: 'Helvetica',
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 5,
     color: '#2c3e50',
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 8,
     color: '#7f8c8d',
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 8,
     color: '#2c3e50',
     backgroundColor: '#f8f9fa',
     padding: 8,
@@ -127,16 +127,16 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+    width: 70,
+    height: 70,
+    marginBottom: 8,
     alignSelf: 'start',
   },
   noteSection: {
     backgroundColor: '#e3f2fd',
     border: '1 solid #90caf9',
     borderRadius: 8,
-    padding: 12,
+    padding: 8,
     marginTop: 10,
   },
   noteText: {
@@ -236,6 +236,25 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+  includedServicesCard: {
+    border: '1 solid #3E6553',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#f0f8f0',
+  },
+  includedServiceText: {
+    fontSize: 11,
+    color: '#3E6553',
+    fontStyle: 'italic',
+  },
+  includedServiceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#3E6553',
+    textAlign: 'center',
+  }
 });
 
 // Función para obtener fecha formateada
@@ -268,9 +287,8 @@ export const PresupuestoPDF = ({
   totalServicios = 0,
   serviciosAdicionales = {},
   precioPorMetro = 60000,
-   adicionalFijo = 15000,  // Nueva prop
+  adicionalFijo = 15000,
   formulaPersonalizada = {},
-  // Nuevas props para consistencia
   cantidadCortinas = 1,
   windowWidth = 0,
   windowHeight = 0,
@@ -283,7 +301,7 @@ export const PresupuestoPDF = ({
   
   // Preparar datos de los presupuestos
   const presupuestosCalculados = presupuestos.map((presupuesto, index) => {
-   // Determinar si usar fórmula personalizada
+    // Determinar si usar fórmula personalizada
     const usarFormulaPersonalizada = formulaPersonalizada?.activa || presupuesto.formulaPersonalizadaActiva;
     const multiplicador = usarFormulaPersonalizada 
       ? (formulaPersonalizada?.multiplicador || presupuesto.formulaMultiplicador || 2)
@@ -292,11 +310,11 @@ export const PresupuestoPDF = ({
       ? (formulaPersonalizada?.precioPersonalizado || presupuesto.formulaPrecioPersonalizado || precioPorMetro)
       : precioPorMetro;
 
-       // Calcular cortinas con la fórmula correcta
+    // Calcular cortinas con la fórmula correcta
     const windowWidth = Number(presupuesto.customWidth) || 0;
     const cantidadCortinas = Number(presupuesto.curtainQuantity) || 1;
    
-     let totalPorCortina;
+    let totalPorCortina;
     if (usarFormulaPersonalizada) {
       totalPorCortina = windowWidth * multiplicador * precioPorMetroActual + adicionalFijo;
     } else {
@@ -305,7 +323,7 @@ export const PresupuestoPDF = ({
       totalPorCortina = base + adicionalFijo;
     }
 
-     const totalCortinas = totalPorCortina * cantidadCortinas;
+    const totalCortinas = totalPorCortina * cantidadCortinas;
 
     // Usar los servicios ya calculados que vienen en el presupuesto
     const servicios = {
@@ -332,7 +350,6 @@ export const PresupuestoPDF = ({
       },
       totalIndividual: totalCortinas + servicios.total
     };
-
   });
 
   // Calcular totales generales usando los datos ya calculados
@@ -344,6 +361,14 @@ export const PresupuestoPDF = ({
   const totalTomaMedidas = presupuestosCalculados.reduce((sum, p) => sum + p.servicios.tomaMedidas, 0);
   const totalRieles = presupuestosCalculados.reduce((sum, p) => sum + p.servicios.rieles, 0);
   const totalInstalacion = presupuestosCalculados.reduce((sum, p) => sum + p.servicios.instalacion, 0);
+
+
+
+    // Determinar estados de servicios
+  const tomaMedidasSolicitado = serviciosAdicionales?.tomaMedidas?.activo || false;
+  const rielesSolicitado = serviciosAdicionales?.rieles?.activo || false;
+  const instalacionSolicitado = serviciosAdicionales?.instalacion?.activo || false;
+
 
   // Usar la información de contacto del primer presupuesto
   const customerInfo = presupuestosCalculados[0]?.customerInfo || {};
@@ -361,9 +386,6 @@ export const PresupuestoPDF = ({
           <Text style={styles.header}>
             {presupuestosCalculados.length > 1 ? 'Presupuesto' : 'Presupuesto'}
           </Text>
-          {/* <Text style={styles.subtitle}>
-            Detalle de presupuesto
-          </Text> */}
 
           {/* Información de Contacto */}
           <View style={styles.contactSection}>
@@ -372,10 +394,6 @@ export const PresupuestoPDF = ({
               <Text style={styles.label}>Nombre:</Text>
               <Text style={styles.value}>{customerInfo?.name || "No proporcionado"}</Text>
             </View>
-            {/* <View style={styles.row}>
-              <Text style={styles.label}>Teléfono:</Text>
-              <Text style={styles.value}>{customerInfo?.phone || "No proporcionado"}</Text>
-            </View> */}
           </View>
 
           {/* Tabla de Presupuestos - Cortinas */}
@@ -387,7 +405,6 @@ export const PresupuestoPDF = ({
             <View style={styles.tableContainer}>
               {/* Encabezado de la tabla */}
               <View style={styles.tableHeader}>
-                {/* <Text style={styles.tableHeaderText}>#</Text> */}
                 <Text style={styles.tableHeaderText}>Cantidad</Text>
                 <Text style={styles.tableHeaderText}>Tipo</Text>
                 <Text style={styles.tableHeaderText}>Medidas</Text>
@@ -398,7 +415,6 @@ export const PresupuestoPDF = ({
               {/* Filas de la tabla */}
               {presupuestosCalculados.map((presupuesto, index) => (
                 <View key={index} style={styles.tableRow}>
-                  {/* <Text style={styles.tableCell}>{presupuesto.index}</Text> */}
                   <Text style={styles.tableCell}>
                     {presupuesto.cortinas.cantidadCortinas} cortina{presupuesto.cortinas.cantidadCortinas > 1 ? 's' : ''}
                   </Text>
@@ -434,67 +450,114 @@ export const PresupuestoPDF = ({
             </View>
           </View>
 
-          {/* Tabla Resumen de Servicios por Presupuesto */}
-          {totalGeneralServicios > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Servicios Adicionales</Text>
-              
+           {/* Sección de Servicios - Con estados de solicitado/no solicitado */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Servicios y Accesorios
+            </Text>
+            
+            {totalGeneralServicios > 0 ? (
+              // Tabla de servicios con costo
               <View style={styles.servicesSummaryTable}>
                 {/* Encabezado de la tabla */}
                 <View style={styles.tableHeader}>
-                  {/* <Text style={styles.tableHeaderText}>#</Text> */}
                   <Text style={styles.tableHeaderText}>Toma de Medidas</Text>
                   <Text style={styles.tableHeaderText}>Rieles</Text>
                   <Text style={styles.tableHeaderText}>Instalación</Text>
-                  <Text style={styles.tableHeaderText}>Total Servicios</Text>
+                  <Text style={styles.tableHeaderText}>Total</Text>
                 </View>
 
-                {/* Filas de la tabla - Mostrar solo presupuestos que tengan servicios */}
+                {/* Filas de la tabla */}
                 {presupuestosCalculados
                   .filter(presupuesto => presupuesto.servicios.total > 0)
                   .map((presupuesto, index) => (
                     <View key={index} style={styles.servicesSummaryRow}>
-                      {/* <Text style={styles.servicesSummaryCell}>{presupuesto.index}</Text> */}
+                      {/* Toma de Medidas */}
                       <Text style={styles.servicesSummaryCell}>
-                        ${formatNumber(presupuesto.servicios.tomaMedidas)}
+                        {presupuesto.servicios.tomaMedidas > 0 ? 
+                          `$${formatNumber(presupuesto.servicios.tomaMedidas)}` : 
+                          'No solicitado'
+                        }
                       </Text>
+                      
+                      {/* Rieles */}
                       <Text style={styles.servicesSummaryCell}>
-                        ${formatNumber(presupuesto.servicios.rieles)}
+                        {presupuesto.servicios.rieles > 0 ? 
+                          `$${formatNumber(presupuesto.servicios.rieles)}` : 
+                          'No solicitado'
+                        }
                       </Text>
+                      
+                      {/* Instalación */}
                       <Text style={styles.servicesSummaryCell}>
-                        ${formatNumber(presupuesto.servicios.instalacion)}
+                        {presupuesto.servicios.instalacion > 0 ? 
+                          `$${formatNumber(presupuesto.servicios.instalacion)}` : 
+                          'No solicitado'
+                        }
                       </Text>
+                      
+                      {/* Total */}
                       <Text style={styles.servicesSummaryCellBold}>
-                        ${formatNumber(presupuesto.servicios.total)}
+                        {presupuesto.servicios.total > 0 ? 
+                          `$${formatNumber(presupuesto.servicios.total)}` : 
+                          '-'
+                        }
                       </Text>
                     </View>
                   ))
                 }
 
                 {/* Totales de servicios */}
-                {(totalTomaMedidas > 0 || totalRieles > 0 || totalInstalacion > 0) && (
-                  <View style={styles.tableFooter}>
-                    <Text style={[styles.servicesSummaryCellBold, {flex: 1, textAlign: 'center'}]}>
-                      TOTALES:
-                    </Text>
-                    <Text style={styles.servicesSummaryCellBold}>
-                      ${formatNumber(totalTomaMedidas)}
-                    </Text>
-                    <Text style={styles.servicesSummaryCellBold}>
-                      ${formatNumber(totalRieles)}
-                    </Text>
-                    <Text style={styles.servicesSummaryCellBold}>
-                      ${formatNumber(totalInstalacion)}
-                    </Text>
-                    <Text style={[styles.servicesSummaryCellBold, {color: '#3E6553'}]}>
-                      ${formatNumber(totalGeneralServicios)}
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.tableFooter}>
+                  <Text style={[styles.servicesSummaryCellBold, {flex: 1, textAlign: 'center'}]}>
+                    TOTALES:
+                  </Text>
+                  <Text style={styles.servicesSummaryCellBold}>
+                    ${formatNumber(totalTomaMedidas)}
+                  </Text>
+                  <Text style={styles.servicesSummaryCellBold}>
+                    ${formatNumber(totalRieles)}
+                  </Text>
+                  <Text style={styles.servicesSummaryCellBold}>
+                    ${formatNumber(totalInstalacion)}
+                  </Text>
+                  <Text style={[styles.servicesSummaryCellBold, {color: '#3E6553'}]}>
+                    ${formatNumber(totalGeneralServicios)}
+                  </Text>
+                </View>
               </View>
-            </View>
-          )}
+            ) : (
+              // Mostrar servicios incluidos sin cargo
+              <View style={styles.includedServicesCard}>
+                <Text style={styles.includedServiceTitle}>
+                  ✓ Servicios Incluidos Sin Cargo
+                </Text>
+                
+                <View style={styles.row}>
+                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Toma de medidas:</Text>
+                  <Text style={[styles.includedServiceText, {flex: 1}]}>
+                    {tomaMedidasSolicitado ? 'Solicitado' : 'Sin cargo'}
+                  </Text>
+                </View>
 
+                <View style={styles.row}>
+                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Colocación/Instalación:</Text>
+                  <Text style={[styles.includedServiceText, {flex: 1}]}>
+                    {instalacionSolicitado ? 'Solicitado' : 'Sin cargo'}
+                  </Text>
+                </View>
+                
+                <View style={styles.row}>
+                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Rieles:</Text>
+                  <Text style={[styles.includedServiceText, {flex: 1}]}>
+                    {rielesSolicitado ? 'Solicitado' : 'No solicitado'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+         
           {/* Resumen Final */}
           <View style={styles.section}>
             <View style={styles.calculationCard}>
@@ -506,42 +569,12 @@ export const PresupuestoPDF = ({
               </View>
               
               {totalGeneralServicios > 0 && (
-                <>
-                  <View style={styles.calculationRow}>
-                    <Text style={styles.calculationDetail}>Servicios Adicionales:</Text>
-                    <Text style={styles.calculationDetail}>
-                      + ${formatNumber(totalGeneralServicios)}
-                    </Text>
-                  </View>
-                  
-                  {/* Desglose de servicios */}
-                  {/* {totalTomaMedidas > 0 && (
-                    <View style={styles.calculationRow}>
-                      <Text style={[styles.calculationDetail, {marginLeft: 10}]}>• Toma de medidas:</Text>
-                      <Text style={styles.calculationDetail}>
-                        ${formatNumber(totalTomaMedidas)}
-                      </Text>
-                    </View>
-                  )} */}
-{/*                   
-                  {totalRieles > 0 && (
-                    <View style={styles.calculationRow}>
-                      <Text style={[styles.calculationDetail, {marginLeft: 10}]}>• Rieles:</Text>
-                      <Text style={styles.calculationDetail}>
-                        ${formatNumber(totalRieles)}
-                      </Text>
-                    </View>
-                  )} */}
-                  
-                  {/* {totalInstalacion > 0 && (
-                    <View style={styles.calculationRow}>
-                      <Text style={[styles.calculationDetail, {marginLeft: 10}]}>• Instalación:</Text>
-                      <Text style={styles.calculationDetail}>
-                        ${formatNumber(totalInstalacion)}
-                      </Text>
-                    </View>
-                  )} */}
-                </>
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationDetail}>Servicios Adicionales:</Text>
+                  <Text style={styles.calculationDetail}>
+                    + ${formatNumber(totalGeneralServicios)}
+                  </Text>
+                </View>
               )}
 
               <View style={styles.totalRow}>
@@ -552,8 +585,8 @@ export const PresupuestoPDF = ({
           </View>
 
           {/* Información Importante */}
-          <View style={[styles.card, {marginTop: 15}]}>
-            <Text style={[styles.sectionTitle, {marginBottom: 8}]}>Información Importante</Text>
+          <View style={[styles.card, {marginTop: 6}]}>
+            <Text style={[styles.sectionTitle, {marginBottom: 5}]}>Información Importante</Text>
             <Text style={styles.noteText}>• Precios válidos por 30 días</Text>
             <Text style={styles.noteText}>• Para comenzar el trabajo se requiere seña del 50%</Text>
             <Text style={styles.noteText}>• Tiempo de entrega estimado: 10-20 días hábiles</Text>
