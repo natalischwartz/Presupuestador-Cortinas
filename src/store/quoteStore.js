@@ -10,7 +10,8 @@ export const useQuoteStore = create(
       selectedQuotes: [],
 
       // Precio por metro desde variable de entorno
-      PRECIO_POR_METRO: Number(import.meta.env.VITE_PRECIO_POR_METRO) || 65000,
+      PRECIO_POR_METRO: Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000,
+      ADICIONAL_FIJO: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000,
 
       addQuote: (newQuote) => set((state) => ({
         quotes: [...state.quotes, { 
@@ -76,6 +77,7 @@ export const useQuoteStore = create(
         if (!quote) return 0;
         
         const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
+        const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
         const BASE_PRICES = get().getBasePrices();
         
         // Obtener medidas básicas
@@ -88,9 +90,12 @@ export const useQuoteStore = create(
           if (quote.formulaPersonalizadaActiva) {
             const multiplicador = Number(quote.formulaMultiplicador) || 2;
             const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-            totalPorCortina = windowWidth * multiplicador * precioPersonalizado;
+            const adicionalFijo  = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
+            totalPorCortina = windowWidth * multiplicador * precioPersonalizado + adicionalFijo;
           } else {
-            totalPorCortina = windowWidth * 2 * PRECIO_POR_METRO;
+             // NUEVA FÓRMULA ESTÁNDAR CON VARIABLES DE ENTORNO
+          const base = windowWidth * 2 * PRECIO_POR_METRO;
+          totalPorCortina = base + ADICIONAL_FIJO;
           }
 
 
@@ -204,18 +209,21 @@ export const useQuoteStore = create(
       // NUEVO: Cálculo específico para cortinas
       calculateCortinas: (quote) => {
         const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
+        const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
         const windowWidth = Number(quote.customWidth) || 0;
         const cantidadCortinas = Number(quote.curtainQuantity) || 1;
         
          let totalPorCortina;
 
           if (quote.formulaPersonalizadaActiva) {
-    const multiplicador = Number(quote.formulaMultiplicador) || 2;
-    const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-    totalPorCortina = windowWidth * multiplicador * precioPersonalizado;
-  } else {
-    totalPorCortina = windowWidth * 2 * PRECIO_POR_METRO;
-  }
+          const multiplicador = Number(quote.formulaMultiplicador) || 2;
+          const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
+          totalPorCortina = windowWidth * multiplicador * precioPersonalizado;
+        } else {
+          // NUEVA FÓRMULA ESTÁNDAR
+          const base = windowWidth * 2 * PRECIO_POR_METRO;
+          totalPorCortina = base + ADICIONAL_FIJO;
+        }
   const totalCortinas = totalPorCortina * cantidadCortinas;
 
    return {
@@ -223,7 +231,8 @@ export const useQuoteStore = create(
     totalCortinas,
     cantidadCortinas,
     windowWidth,
-    precioPorMetro: PRECIO_POR_METRO
+    precioPorMetro: PRECIO_POR_METRO,
+    adicionalFijo: ADICIONAL_FIJO
   };
       },
 

@@ -9,7 +9,8 @@ import { PresupuestoPDF } from "./PresupuestoPDF";
 import { useQuoteStore } from "@/store/quoteStore"; // Importa el store
 
 // Precios base desde variables de entorno
-const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO) || 65000;
+const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000;
+const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000;
 const BASE_PRICES = {
   CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE),
   CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE),
@@ -51,6 +52,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     activa: data.formulaPersonalizadaActiva || false,
     multiplicador: data.formulaMultiplicador || 2,
     precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO,
+    adicionalFijo: data.adicionalFijo || ADICIONAL_FIJO,
     editando: false
   });
 
@@ -78,11 +80,11 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     
     if (formulaPersonalizada.activa) {
       // Usar fórmula personalizada
-      return windowWidth * formulaPersonalizada.multiplicador * formulaPersonalizada.precioPersonalizado;
+      return windowWidth * formulaPersonalizada.multiplicador * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
     } else {
        // Usar el mismo PRECIO_POR_METRO que el store para consistencia
     const store = useQuoteStore.getState();
-    return windowWidth * 2 * store.PRECIO_POR_METRO;
+    return (windowWidth * 2 * store.PRECIO_POR_METRO) + store.ADICIONAL_FIJO;
     }
   };
 
@@ -132,7 +134,8 @@ const totalGeneral = useQuoteStore(state => {
     cantidadVentanasInstalacion: instalacion.cantidadVentanas,
     formulaPersonalizadaActiva: formulaPersonalizada.activa,
     formulaMultiplicador: formulaPersonalizada.multiplicador,
-    formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado
+    formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
+    adicionalFijo: formulaPersonalizada.adicionalFijo
   });
 });
 
@@ -156,6 +159,7 @@ const totalGeneral = useQuoteStore(state => {
       formulaPersonalizadaActiva: formulaPersonalizada.activa,
       formulaMultiplicador: formulaPersonalizada.multiplicador,
       formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
+      adicionalFijo: formulaPersonalizada.adicionalFijo,
       // Campos básicos importantes
       customWidth: data.customWidth,
       customHeight: data.customHeight,
@@ -254,26 +258,50 @@ const totalGeneral = useQuoteStore(state => {
   };
 
   const handleMultiplicadorChange = (e) => {
-    if (isPrintMode) return;
-    const value = parseFloat(e.target.value);
-    if (value > 0) {
-      setFormulaPersonalizada(prev => ({
-        ...prev,
-        multiplicador: value
-      }));
-    }
-  };
+  if (isPrintMode) return;
+  
+  const value = e.target.value;
+  
+  // Permitir campo vacío temporalmente
+  if (value === '') {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      multiplicador: '' // valor vacío temporal
+    }));
+    return;
+  }
+  
+  const numericValue = parseFloat(value);
+  if (numericValue > 0) {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      multiplicador: numericValue
+    }));
+  }
+};
 
   const handlePrecioPersonalizadoChange = (e) => {
-    if (isPrintMode) return;
-    const value = parseFloat(e.target.value);
-    if (value > 0) {
-      setFormulaPersonalizada(prev => ({
-        ...prev,
-        precioPersonalizado: value
-      }));
-    }
-  };
+  if (isPrintMode) return;
+  
+  const value = e.target.value;
+  
+  // Permitir campo vacío temporalmente
+  if (value === '') {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      precioPersonalizado: '' // valor vacío temporal
+    }));
+    return;
+  }
+  
+  const numericValue = parseFloat(value);
+  if (numericValue > 0) {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      precioPersonalizado: numericValue
+    }));
+  }
+};
 
   const handleEditarFormula = () => {
     if (isPrintMode) return;
@@ -594,9 +622,9 @@ const handleInstalacionCantidadChange = (e) => {
                       </div>
                     ) : (
                       <div className="text-sm text-purple-700">
-                        <p>Fórmula actual: <strong>Ancho × {formulaPersonalizada.multiplicador} × ${formulaPersonalizada.precioPersonalizado.toLocaleString()}</strong></p>
+                        <p>Fórmula actual: <strong>Ancho × {formulaPersonalizada.multiplicador} × ${formulaPersonalizada.precioPersonalizado.toLocaleString()} + $ {ADICIONAL_FIJO.toLocaleString()}</strong></p>
                         <p className="text-xs mt-1">
-                          Fórmula estándar: Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()}
+                          Fórmula estándar: Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}
                         </p>
                       </div>
                     )}
@@ -605,7 +633,7 @@ const handleInstalacionCantidadChange = (e) => {
 
                 {!formulaPersonalizada.activa && (
                   <div className="text-sm text-purple-700">
-                    <p>Usando fórmula estándar: <strong>Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()}</strong></p>
+                    <p>Usando fórmula estándar: <strong>Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}</strong></p>
                   </div>
                 )}
               </div>
@@ -817,8 +845,8 @@ const handleInstalacionCantidadChange = (e) => {
                     <span className="text-gray-600">Fórmula:</span>
                     <span className="font-medium">
                       {formulaPersonalizada.activa 
-                        ? `${windowWidth.toFixed(2)}m × ${formulaPersonalizada.multiplicador} × $${formulaPersonalizada.precioPersonalizado.toLocaleString()}`
-                        : `${windowWidth.toFixed(2)}m × 2 × $${PRECIO_POR_METRO.toLocaleString()}`
+                        ? `${windowWidth.toFixed(2)}m × ${formulaPersonalizada.multiplicador} × $${formulaPersonalizada.precioPersonalizado.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}`
+                        : `${windowWidth.toFixed(2)}m × 2 × $${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}`
                       }
                     </span>
                   </div>
@@ -912,7 +940,14 @@ const handleInstalacionCantidadChange = (e) => {
                   totalServicios={totalServicios}
                   serviciosAdicionales={serviciosAdicionales}
                   precioPorMetro={formulaPersonalizada.activa ? formulaPersonalizada.precioPersonalizado : PRECIO_POR_METRO}
+                  adicionalFijo={ADICIONAL_FIJO} // ← Nueva prop
                   formulaPersonalizada={formulaPersonalizada}
+                  // Agregar estas props para consistencia
+                  cantidadCortinas={cantidadCortinas}
+                  windowWidth={windowWidth}
+                  windowHeight={windowHeight}
+                  PRECIO_POR_METRO={PRECIO_POR_METRO} // Pasar la constante
+                  ADICIONAL_FIJO={ADICIONAL_FIJO} // Pasar la constante
                 />
               }
               fileName={`presupuesto-cortinas-${Date.now()}.pdf`}

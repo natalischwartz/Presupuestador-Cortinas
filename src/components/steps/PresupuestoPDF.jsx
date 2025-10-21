@@ -267,8 +267,15 @@ export const PresupuestoPDF = ({
   totalPorCortina = 0,
   totalServicios = 0,
   serviciosAdicionales = {},
-  precioPorMetro = 65000,
-  formulaPersonalizada = {}
+  precioPorMetro = 60000,
+   adicionalFijo = 15000,  // Nueva prop
+  formulaPersonalizada = {},
+  // Nuevas props para consistencia
+  cantidadCortinas = 1,
+  windowWidth = 0,
+  windowHeight = 0,
+  PRECIO_POR_METRO = 60000,
+  ADICIONAL_FIJO = 15000
 }) => {
   // Asegurarnos de que data sea un array
   const presupuestos = Array.isArray(data) ? data : [data];
@@ -288,8 +295,17 @@ export const PresupuestoPDF = ({
        // Calcular cortinas con la fórmula correcta
     const windowWidth = Number(presupuesto.customWidth) || 0;
     const cantidadCortinas = Number(presupuesto.curtainQuantity) || 1;
-    const totalPorCortina = windowWidth * multiplicador * precioPorMetroActual; // ← FÓRMULA CORREGIDA
-    const totalCortinas = totalPorCortina * cantidadCortinas;
+   
+     let totalPorCortina;
+    if (usarFormulaPersonalizada) {
+      totalPorCortina = windowWidth * multiplicador * precioPorMetroActual + adicionalFijo;
+    } else {
+      // NUEVA FÓRMULA ESTÁNDAR
+      const base = windowWidth * 2 * precioPorMetroActual;
+      totalPorCortina = base + adicionalFijo;
+    }
+
+     const totalCortinas = totalPorCortina * cantidadCortinas;
 
     // Usar los servicios ya calculados que vienen en el presupuesto
     const servicios = {
