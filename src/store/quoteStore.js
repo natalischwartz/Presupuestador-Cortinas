@@ -1,3 +1,4 @@
+import { number } from "zod";
 import { create } from "zustand";
 import { persist } from 'zustand/middleware';
 
@@ -11,6 +12,7 @@ export const useQuoteStore = create(
 
       // Precio por metro desde variable de entorno
       PRECIO_POR_METRO: Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000,
+      PRECIO_POR_METRO_ROLLER: Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 25000,
       ADICIONAL_FIJO: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000,
 
       addQuote: (newQuote) => set((state) => ({
@@ -77,6 +79,7 @@ export const useQuoteStore = create(
         if (!quote) return 0;
         
         const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
+        const PRECIO_POR_METRO_ROLLER = get().PRECIO_POR_METRO_ROLLER; 
         const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
         const BASE_PRICES = get().getBasePrices();
         
@@ -88,15 +91,24 @@ export const useQuoteStore = create(
         // 1. Cálculo de cortinas (fórmula simplificada)
           let totalPorCortina;
           if (quote.formulaPersonalizadaActiva) {
-            const multiplicador = Number(quote.formulaMultiplicador) || 2;
+            //formula personalizadapara cualquier tipo de cortina
+            const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth*2);
             const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-            const adicionalFijo  = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
-            totalPorCortina = windowWidth * multiplicador * precioPersonalizado + adicionalFijo;
-          } else {
-             // NUEVA FÓRMULA ESTÁNDAR CON VARIABLES DE ENTORNO
-          const base = windowWidth * 2 * PRECIO_POR_METRO;
-          totalPorCortina = base + ADICIONAL_FIJO;
-          }
+            const adicionalFijo = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
+
+            totalPorCortina =valorPersonalizado * precioPersonalizado + adicionalFijo;
+          } else if (quote.curtainType === 'roller') {
+          // LÓGICA ESPECÍFICA PARA ROLLER
+          const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
+          const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
+          const subtotal = (sistema + tela) * 2; 
+          totalPorCortina = subtotal + ADICIONAL_FIJO;
+          
+        } else {
+          // FÓRMULA ESTÁNDAR PARA OTROS TIPOS DE CORTINAS
+            const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
+          totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
+        }
 
 
         const totalCortinas = totalPorCortina * cantidadCortinas;
@@ -130,15 +142,17 @@ export const useQuoteStore = create(
         
         const totalGeneral = totalCortinas + totalServicios;
         
-        console.log('Nuevo cálculo simplificado:', {
-          id: quote.id,
-          windowWidth,
-          cantidadCortinas,
-          totalPorCortina,
-          totalCortinas,
-          totalServicios,
-          totalGeneral
-        });
+        // console.log('Nuevo cálculo simplificado:', {
+        //   id: quote.id,
+        //   curtainType:quote.curtainType,
+        //   windowWidth,
+        //   windowHeight,
+        //   cantidadCortinas,
+        //   totalPorCortina,
+        //   totalCortinas,
+        //   totalServicios,
+        //   totalGeneral
+        // });
         
         return totalGeneral;
       },
@@ -209,21 +223,34 @@ export const useQuoteStore = create(
       // NUEVO: Cálculo específico para cortinas
       calculateCortinas: (quote) => {
         const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
+        const PRECIO_POR_METRO_ROLLER = get().PRECIO_POR_METRO_ROLLER;
         const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
+
         const windowWidth = Number(quote.customWidth) || 0;
+        const windowHeight = Number(quote.customHeight) || 0;
         const cantidadCortinas = Number(quote.curtainQuantity) || 1;
         
-         let totalPorCortina;
+        let totalPorCortina;
+        let calculoDetalle ="";
 
           if (quote.formulaPersonalizadaActiva) {
-          const multiplicador = Number(quote.formulaMultiplicador) || 2;
+          const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth*2);
           const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-          totalPorCortina = windowWidth * multiplicador * precioPersonalizado;
-        } else {
-          // NUEVA FÓRMULA ESTÁNDAR
-          const base = windowWidth * 2 * PRECIO_POR_METRO;
-          totalPorCortina = base + ADICIONAL_FIJO;
-        }
+          totalPorCortina = valorPersonalizado * precioPersonalizado + ADICIONAL_FIJO;
+          calculoDetalle = `valor (${valorPersonalizado}) x $ ${precioPersonalizado.toLocaleString()} + $ ${ADICIONAL_FIJO.toLocaleString()}`;
+        } else if(quote.curtainType === 'roller')  {
+           // LÓGICA ESPECÍFICA PARA ROLLER - AGREGAR ESTA PARTE
+    const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
+    const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
+    totalPorCortina = (sistema + tela) * 2 + ADICIONAL_FIJO;
+    calculoDetalle = `(Sistema (${windowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()}) + Tela (${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()})) × 2 + $${ADICIONAL_FIJO.toLocaleString()}`;
+        }else {
+    // CORTINA TRADICIONAL
+    const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
+    totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
+    calculoDetalle = `Valor (${valor}) × $${PRECIO_POR_METRO.toLocaleString()} + $${ADICIONAL_FIJO.toLocaleString()}`;
+  }
+
   const totalCortinas = totalPorCortina * cantidadCortinas;
 
    return {
@@ -231,8 +258,11 @@ export const useQuoteStore = create(
     totalCortinas,
     cantidadCortinas,
     windowWidth,
+    windowHeight,
     precioPorMetro: PRECIO_POR_METRO,
-    adicionalFijo: ADICIONAL_FIJO
+    precioPorMetroRoller : PRECIO_POR_METRO_ROLLER,
+    adicionalFijo: ADICIONAL_FIJO,
+    calculoDetalle
   };
       },
 

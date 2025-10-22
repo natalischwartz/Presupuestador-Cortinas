@@ -9,6 +9,7 @@ import { PresupuestoPDF } from "./PresupuestoPDF";
 import { useQuoteStore } from "@/store/quoteStore"; // Importa el store
 
 // Precios base desde variables de entorno
+const PRECIO_POR_METRO_ROLLER = Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 25000;
 const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000;
 const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000;
 const BASE_PRICES = {
@@ -47,15 +48,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     cantidadVentanas: isPrintMode ? data.cantidadVentanasInstalacion : data.cantidadVentanasInstalacion || 1
   });
 
-  // Estado para la fórmula personalizada
-  const [formulaPersonalizada, setFormulaPersonalizada] = useState({
-    activa: data.formulaPersonalizadaActiva || false,
-    multiplicador: data.formulaMultiplicador || 2,
-    precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO,
-    adicionalFijo: data.adicionalFijo || ADICIONAL_FIJO,
-    editando: false
-  });
-
+  
   // Obtener medidas
   const getWindowHeight = () => {
     if (data.customHeight) {
@@ -74,19 +67,44 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   const windowHeight = getWindowHeight();
   const windowWidth = getWindowWidth();
 
+  // Estado para la fórmula personalizada
+  const [formulaPersonalizada, setFormulaPersonalizada] = useState({
+    activa: data.formulaPersonalizadaActiva || false,
+    valorPersonalizado : data.formulaValorPersonalizado || (windowWidth*2),
+    multiplicador: data.formulaMultiplicador || 2,
+    precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO,
+    adicionalFijo: data.adicionalFijo || ADICIONAL_FIJO,
+    editando: false
+  });
+
+
   // Calcular total por cortina - con fórmula personalizada o estándar
   const calcularTotalPorCortina = () => {
     if (!windowWidth) return 0;
     
     if (formulaPersonalizada.activa) {
       // Usar fórmula personalizada
-      return windowWidth * formulaPersonalizada.multiplicador * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
-    } else {
-       // Usar el mismo PRECIO_POR_METRO que el store para consistencia
-    const store = useQuoteStore.getState();
-    return (windowWidth * 2 * store.PRECIO_POR_METRO) + store.ADICIONAL_FIJO;
-    }
-  };
+     const valorPersonalizado = formulaPersonalizada.valorPersonalizado || (windowWidth * 2);
+     return valorPersonalizado * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
+    } 
+    
+     // Lógica específica para Roller
+  if (data.curtainType === 'roller') {
+   //FORMULA ROLLER : sistema + tela + adicional fijo
+   const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
+   const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
+   
+   return (sistema + tela)*2 + ADICIONAL_FIJO;
+  }else {
+     // FÓRMULA TRADICIONAL: Valor × Precio + Adicional Fijo
+    const valor = formulaPersonalizada.valorPersonalizado || (windowWidth * 2);
+    return valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
+  }
+  
+  // // Fórmula estándar para otros tipos de cortinas
+  // const store = useQuoteStore.getState();
+  // return (windowWidth * 2 * store.PRECIO_POR_METRO) + store.ADICIONAL_FIJO;
+};
 
   // Calcular costos de servicios
   const calcularCostoTomaMedidas = () => {
@@ -114,40 +132,18 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   const totalCortinas = totalPorCortina * cantidadCortinas;
   const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
  
-  // Usar la función calculateTotal del store para el cálculo final
-const totalGeneral = useQuoteStore(state => {
-  if (!data.id) return 0;
-  
-  const quote = state.quotes.find(q => q.id === data.id);
-  if (!quote) return 0;
-  
-  return state.calculateTotal({
-    ...quote,
-    curtainQuantity: cantidadCortinas,
-    necesitaTM: tomaMedidas.activo,
-    cantidadVentanas: tomaMedidas.cantidadVentanas,
-    ubicacionTM: tomaMedidas.ubicacion,
-    necesitaRiel: rieles.activo,
-    cantidadVentanasRiel: rieles.cantidadVentanas,
-    metrosPorVentana: rieles.metrosPorVentana,
-    hasInstallation: instalacion.activo,
-    cantidadVentanasInstalacion: instalacion.cantidadVentanas,
-    formulaPersonalizadaActiva: formulaPersonalizada.activa,
-    formulaMultiplicador: formulaPersonalizada.multiplicador,
-    formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
-    adicionalFijo: formulaPersonalizada.adicionalFijo
-  });
-});
+  console.log(cantidadCortinas)
 
+const totalGeneral = totalCortinas + totalServicios;
 
    // Función para actualizar el store de Zustand
- const actualizarStore = useCallback(() => {
+const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
   if (!isPrintMode && data.id) {
     const store = useQuoteStore.getState();
     
     const datosActualizados = {
       curtainQuantity: cantidadCortinas,
-      // NO incluir totalPrice aquí - dejar que el store lo calcule
+      totalPrice: totalGeneralActual,
       necesitaTM: tomaMedidas.activo,
       cantidadVentanas: tomaMedidas.cantidadVentanas,
       ubicacionTM: tomaMedidas.ubicacion,
@@ -160,39 +156,70 @@ const totalGeneral = useQuoteStore(state => {
       formulaMultiplicador: formulaPersonalizada.multiplicador,
       formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
       adicionalFijo: formulaPersonalizada.adicionalFijo,
-      // Campos básicos importantes
       customWidth: data.customWidth,
       customHeight: data.customHeight,
-      curtainType: data.curtainType
+      curtainType: data.curtainType,
+      totalServicios: totalServiciosActual
     };
     
-    console.log('🔄 Actualizando store con:', datosActualizados);
+    console.log('🔄 Actualizando store:', datosActualizados);
     
-    // Actualizar en el store de Zustand
     store.updateQuote(data.id, datosActualizados);
-    
-    // Calcular el total usando la función del store para logging
-    const quoteActualizada = { ...datosActualizados, id: data.id };
-    const totalCalculado = store.calculateTotal(quoteActualizada);
-    console.log('💰 Total calculado por store:', totalCalculado);
-    
-    // También llamar a updateData si es necesario para el componente padre
-    if (updateData) {
-      updateData(datosActualizados);
-    }
   }
-}, [
-  data.id, isPrintMode, cantidadCortinas, tomaMedidas,
-  rieles, instalacion, formulaPersonalizada, updateData,
-  data.customWidth, data.customHeight, data.curtainType
-]);
+};
 
-    // Actualizar store cuando cambien los datos
-  useEffect(() => {
-    actualizarStore();
-  }, [cantidadCortinas, tomaMedidas, rieles, instalacion, formulaPersonalizada, totalGeneral, windowWidth, // Agregar esta dependencia
-  data.id ]);
+console.log(cantidadCortinas)
 
+const actualizarTodo = () => {
+  console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
+
+
+  // RECALCULAR todos los valores con la cantidad actual
+  const totalPorCortinaActual = calcularTotalPorCortina();
+  const totalCortinasActual = totalPorCortinaActual * cantidadCortinas;
+  const totalServiciosActual = calcularCostoTomaMedidas() + calcularCostoRieles() + calcularCostoInstalacion();
+  const totalGeneralActual = totalCortinasActual + totalServiciosActual;
+  console.log(cantidadCortinas)
+  
+
+  
+  // Actualizar store
+  if (!isPrintMode && data.id) {
+    actualizarStore(totalGeneralActual, totalServiciosActual);
+  }
+  
+  // Actualizar data padre
+  if (!isPrintMode && updateData) {
+    updateData({
+      curtainQuantity: cantidadCortinas,
+      totalPrice: totalGeneralActual,
+      necesitaTM: tomaMedidas.activo,
+      cantidadVentanas: tomaMedidas.cantidadVentanas,
+      ubicacionTM: tomaMedidas.ubicacion,
+      necesitaRiel: rieles.activo,
+      cantidadVentanasRiel: rieles.cantidadVentanas,
+      metrosPorVentana: rieles.metrosPorVentana,
+      hasInstallation: instalacion.activo,
+      cantidadVentanasInstalacion: instalacion.cantidadVentanas,
+      costoTomaMedidas: costoTomaMedidas,
+      costoRieles: costoRieles,
+      costoInstalacion: costoInstalacion,
+      totalServicios: totalServiciosActual,
+      formulaPersonalizadaActiva: formulaPersonalizada.activa,
+      formulaMultiplicador: formulaPersonalizada.multiplicador,
+      formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
+      adicionalFijo: formulaPersonalizada.adicionalFijo
+    });
+  }
+};
+
+useEffect(() => {
+  if (!isPrintMode && data.id) {
+    actualizarTodo();
+  }
+}, [cantidadCortinas]);
+
+  
   // Estructura de servicios para el PDF
   const serviciosAdicionales = {
     tomaMedidas: {
@@ -223,85 +250,185 @@ const totalGeneral = useQuoteStore(state => {
     }
   };
 
-  // Actualizar datos
-  useEffect(() => {
-    if (!isPrintMode) {
-      updateData({
-        curtainQuantity: cantidadCortinas,
-        totalPrice: totalGeneral,
-        necesitaTM: tomaMedidas.activo,
-        cantidadVentanas: tomaMedidas.cantidadVentanas,
-        ubicacionTM: tomaMedidas.ubicacion,
-        necesitaRiel: rieles.activo,
-        cantidadVentanasRiel: rieles.cantidadVentanas,
-        metrosPorVentana: rieles.metrosPorVentana,
-        hasInstallation: instalacion.activo,
-        cantidadVentanasInstalacion: instalacion.cantidadVentanas,
-        costoTomaMedidas: costoTomaMedidas,
-        costoRieles: costoRieles,
-        costoInstalacion: costoInstalacion,
-        totalServicios: totalServicios,
-        formulaPersonalizadaActiva: formulaPersonalizada.activa,
-        formulaMultiplicador: formulaPersonalizada.multiplicador,
-        formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado
-      });
-    }
-  }, [cantidadCortinas, tomaMedidas, rieles, instalacion, formulaPersonalizada, totalGeneral, isPrintMode]);
+
+// Handlers corregidos para cantidad de cortinas
+const handleIncrement = () => {
+  if (isPrintMode) return;
+  setCantidadCortinas(prev => prev + 1);
+};
+
+const handleDecrement = () => {
+  if (isPrintMode) return;
+  setCantidadCortinas(prev => Math.max(1, prev - 1));
+};
+
+const handleCantidadChange = (e) => {
+  if (isPrintMode) return;
+  const value = parseInt(e.target.value) || 1;
+  if (value > 0) setCantidadCortinas(value);
+};
 
   // Handlers para fórmula personalizada
   const handleToggleFormulaPersonalizada = () => {
-    if (isPrintMode) return;
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      activa: !prev.activa
-    }));
-  };
-
-  const handleMultiplicadorChange = (e) => {
   if (isPrintMode) return;
-  
+  setFormulaPersonalizada(prev => ({
+    ...prev,
+    activa: !prev.activa
+  }));
+  setTimeout(() => actualizarTodo(), 0);
+};
+
+const handleMultiplicadorChange = (e) => {
+  if (isPrintMode) return;
   const value = e.target.value;
-  
-  // Permitir campo vacío temporalmente
   if (value === '') {
     setFormulaPersonalizada(prev => ({
       ...prev,
-      multiplicador: '' // valor vacío temporal
+      multiplicador: ''
     }));
     return;
   }
-  
   const numericValue = parseFloat(value);
   if (numericValue > 0) {
     setFormulaPersonalizada(prev => ({
       ...prev,
       multiplicador: numericValue
     }));
+    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
-  const handlePrecioPersonalizadoChange = (e) => {
+
+const handleValorPersonalizadoChange = (e) => {
   if (isPrintMode) return;
-  
   const value = e.target.value;
-  
-  // Permitir campo vacío temporalmente
   if (value === '') {
     setFormulaPersonalizada(prev => ({
       ...prev,
-      precioPersonalizado: '' // valor vacío temporal
+      valorPersonalizado: ''
     }));
     return;
   }
-  
+  const numericValue = parseFloat(value);
+  if (numericValue > 0) {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      valorPersonalizado: numericValue
+    }));
+    setTimeout(() => actualizarTodo(), 0);
+  }
+};
+
+const handlePrecioPersonalizadoChange = (e) => {
+  if (isPrintMode) return;
+  const value = e.target.value;
+  if (value === '') {
+    setFormulaPersonalizada(prev => ({
+      ...prev,
+      precioPersonalizado: ''
+    }));
+    return;
+  }
   const numericValue = parseFloat(value);
   if (numericValue > 0) {
     setFormulaPersonalizada(prev => ({
       ...prev,
       precioPersonalizado: numericValue
     }));
+    setTimeout(() => actualizarTodo(), 0);
   }
 };
+
+
+// Handlers para toma de medidas
+const handleTomaMedidasToggle = () => {
+  if (isPrintMode) return;
+  setTomaMedidas(prev => ({
+    ...prev,
+    activo: !prev.activo
+  }));
+  setTimeout(() => actualizarTodo(), 0);
+};
+
+const handleTomaMedidasCantidadChange = (e) => {
+  if (isPrintMode) return;
+  const value = parseInt(e.target.value);
+  if (value > 0) {
+    setTomaMedidas(prev => ({
+      ...prev,
+      cantidadVentanas: value
+    }));
+    setTimeout(() => actualizarTodo(), 0);
+  }
+};
+
+const handleTomaMedidasUbicacionChange = (ubicacion) => {
+  if (isPrintMode) return;
+  setTomaMedidas(prev => ({
+    ...prev,
+    ubicacion
+  }));
+  setTimeout(() => actualizarTodo(), 0);
+};
+
+// Handlers para rieles
+const handleRielesToggle = () => {
+  if (isPrintMode) return;
+  setRieles(prev => ({
+    ...prev,
+    activo: !prev.activo
+  }));
+  setTimeout(() => actualizarTodo(), 0);
+};
+
+
+const handleRielesCantidadChange = (e) => {
+  if (isPrintMode) return;
+  const value = parseInt(e.target.value);
+  if (value > 0) {
+    setRieles(prev => ({
+      ...prev,
+      cantidadVentanas: value
+    }));
+    setTimeout(() => actualizarTodo(), 0);
+  }
+};
+
+
+const handleRielesMetrosChange = (e) => {
+  if (isPrintMode) return;
+  const value = parseFloat(e.target.value);
+  if (value >= 0) {
+    setRieles(prev => ({
+      ...prev,
+      metrosPorVentana: value
+    }));
+    setTimeout(() => actualizarTodo(), 0);
+  }
+};
+
+// Handlers para instalación
+const handleInstalacionToggle = () => {
+  if (isPrintMode) return;
+  setInstalacion(prev => ({
+    ...prev,
+    activo: !prev.activo
+  }));
+  setTimeout(() => actualizarTodo(), 0);
+};
+
+const handleInstalacionCantidadChange = (e) => {
+  if (isPrintMode) return;
+  const value = parseInt(e.target.value);
+  if (value > 0) {
+    setInstalacion(prev => ({
+      ...prev,
+      cantidadVentanas: value
+    }));
+    setTimeout(() => actualizarTodo(), 0);
+  }
+};
+
 
   const handleEditarFormula = () => {
     if (isPrintMode) return;
@@ -317,6 +444,7 @@ const totalGeneral = useQuoteStore(state => {
       ...prev,
       editando: false
     }));
+     setTimeout(() => actualizarTodo(), 0); // ← AGREGAR AQUÍ
   };
 
   const handleCancelarEdicion = () => {
@@ -327,109 +455,10 @@ const totalGeneral = useQuoteStore(state => {
       multiplicador: data.formulaMultiplicador || 2,
       precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO
     }));
+    
   };
 
-  // Handlers para toma de medidas
-const handleTomaMedidasToggle = () => {
-  if (isPrintMode) return;
-  setTomaMedidas(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-const handleTomaMedidasCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = parseInt(e.target.value);
-  if (value > 0) {
-    setTomaMedidas(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-const handleTomaMedidasUbicacionChange = (ubicacion) => {
-  if (isPrintMode) return;
-  setTomaMedidas(prev => ({
-    ...prev,
-    ubicacion
-  }));
-};
-
-// Handlers para rieles
-const handleRielesToggle = () => {
-  if (isPrintMode) return;
-  setRieles(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-const handleRielesCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = parseInt(e.target.value);
-  if (value > 0) {
-    setRieles(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-const handleRielesMetrosChange = (e) => {
-  if (isPrintMode) return;
-  const value = parseFloat(e.target.value);
-  if (value >= 0) {
-    setRieles(prev => ({
-      ...prev,
-      metrosPorVentana: value
-    }));
-  }
-};
-
-// Handlers para instalación
-const handleInstalacionToggle = () => {
-  if (isPrintMode) return;
-  setInstalacion(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-const handleInstalacionCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = parseInt(e.target.value);
-  if (value > 0) {
-    setInstalacion(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-  // Handlers para cantidad de cortinas
-  const handleCantidadChange = (e) => {
-    if (isPrintMode) return;
-    const value = parseInt(e.target.value);
-    if (value > 0) {
-      setCantidadCortinas(value);
-    }
-  };
-
-  const handleIncrement = () => {
-    if (isPrintMode) return;
-    setCantidadCortinas(prev => prev + 1);
-  };
-
-  const handleDecrement = () => {
-    if (isPrintMode) return;
-    if (cantidadCortinas > 1) {
-      setCantidadCortinas(prev => prev - 1);
-    }
-  };
-
-  // ... (los demás handlers para servicios se mantienen igual)
+  
 
   return (
     <div className="space-y-6">
@@ -535,109 +564,158 @@ const handleInstalacionCantidadChange = (e) => {
               )}
             </div>
 
-            {/* Configuración de Fórmula */}
-            {!isPrintMode && (
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4 text-purple-600" />
-                    <h4 className="font-semibold">Configuración de Fórmula</h4>
-                  </div>
-                  <Button
-                    variant={formulaPersonalizada.activa ? "default" : "outline"}
-                    size="sm"
-                    onClick={handleToggleFormulaPersonalizada}
-                  >
-                    {formulaPersonalizada.activa ? "Personalizada" : "Estándar"}
-                  </Button>
+          {/* Configuración de Fórmula */}
+          {!isPrintMode && (
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-purple-600" />
+                  <h4 className="font-semibold">Configuración de Fórmula</h4>
                 </div>
+                <Button
+                  variant={formulaPersonalizada.activa ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleToggleFormulaPersonalizada}
+                >
+                  {formulaPersonalizada.activa ? "Personalizada" : "Estándar"}
+                </Button>
+              </div>
 
-                {formulaPersonalizada.activa && (
-                  <div className="space-y-3 mt-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">
-                        Fórmula personalizada:
-                      </Label>
-                      {!formulaPersonalizada.editando ? (
+              {formulaPersonalizada.activa ? (
+                <div className="space-y-3">
+                  {/* BOTONES DE EDITAR/GUARDAR */}
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">
+                      Fórmula personalizada:
+                    </Label>
+                    {!formulaPersonalizada.editando ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEditarFormula}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-3 w-3" />
+                        Editar
+                      </Button>
+                    ) : (
+                      <div className="flex gap-1">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={handleEditarFormula}
-                          className="flex items-center gap-1"
+                          onClick={handleGuardarFormula}
+                          className="h-6 px-2 text-green-600"
                         >
-                          <Edit className="h-3 w-3" />
-                          Editar
+                          Guardar
                         </Button>
-                      ) : (
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleGuardarFormula}
-                            className="h-6 px-2 text-green-600"
-                          >
-                            Guardar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCancelarEdicion}
-                            className="h-6 px-2 text-red-600"
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-
-                    {formulaPersonalizada.editando ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="multiplicador" className="text-sm font-medium">
-                            Multiplicador:
-                          </Label>
-                          <Input
-                            id="multiplicador"
-                            type="number"
-                            step="0.1"
-                            min="0.1"
-                            value={formulaPersonalizada.multiplicador}
-                            onChange={handleMultiplicadorChange}
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="precio-personalizado" className="text-sm font-medium">
-                            Precio por metro:
-                          </Label>
-                          <Input
-                            id="precio-personalizado"
-                            type="number"
-                            min="1"
-                            value={formulaPersonalizada.precioPersonalizado}
-                            onChange={handlePrecioPersonalizadoChange}
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-purple-700">
-                        <p>Fórmula actual: <strong>Ancho × {formulaPersonalizada.multiplicador} × ${formulaPersonalizada.precioPersonalizado.toLocaleString()} + $ {ADICIONAL_FIJO.toLocaleString()}</strong></p>
-                        <p className="text-xs mt-1">
-                          Fórmula estándar: Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}
-                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelarEdicion}
+                          className="h-6 px-2 text-red-600"
+                        >
+                          Cancelar
+                        </Button>
                       </div>
                     )}
                   </div>
-                )}
 
-                {!formulaPersonalizada.activa && (
-                  <div className="text-sm text-purple-700">
-                    <p>Usando fórmula estándar: <strong>Ancho × 2 × ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}</strong></p>
+                  {/* CAMPOS EDITABLES CUANDO ESTÁ EN MODO EDICIÓN */}
+                  {formulaPersonalizada.editando ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="valor-personalizado" className="text-sm font-medium">
+                          Valor:
+                        </Label>
+                        <Input
+                          id="valor-personalizado"
+                          type="number"
+                          step="0.1"
+                          min="0.1"
+                          value={formulaPersonalizada.valorPersonalizado}
+                          onChange={handleValorPersonalizadoChange}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="precio-personalizado" className="text-sm font-medium">
+                          Precio por metro:
+                        </Label>
+                        <Input
+                          id="precio-personalizado"
+                          type="number"
+                          min="1"
+                          value={formulaPersonalizada.precioPersonalizado}
+                          onChange={handlePrecioPersonalizadoChange}
+                          className="mt-1"
+                        />
+                      </div>
+                       <div>
+                        <Label htmlFor="adicional-fijo" className="text-sm font-medium">
+                          Adicional fijo:
+                        </Label>
+                        <Input
+                          id="adicional-fijo"
+                          type="number"
+                          min="1"
+                          value={formulaPersonalizada.adicionalFijo}
+                          onChange={(e) => setFormulaPersonalizada(prev => ({
+                            ...prev,
+                            adicionalFijo:parseFloat(e.target.value) || 0
+                          }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // VISUALIZACIÓN CUANDO NO ESTÁ EDITANDO
+                    <div className="text-sm text-purple-700">
+                      <p>Fórmula actual: <strong>valor x precio + adicional fijo</strong></p>
+                      <p className="text-xs mt-1">
+                        <strong>Valor:</strong>{formulaPersonalizada.valorPersonalizado} |
+                        <strong>Pecio</strong>${formulaPersonalizada.precioPersonalizado.toLocaleString()} |
+                        <strong>Adicional</strong> ${formulaPersonalizada.adicionalFijo.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // VISUALIZACIÓN CUANDO NO ESTÁ ACTIVA LA FÓRMULA PERSONALIZADA
+                <div className="text-sm text-purple-700">
+                  <p>Usando fórmula {data.curtainType === 'roller' ? 'Roller' : 'tradicional'}:</p>
+                  <p className="font-bold mt-1">
+                    {data.curtainType === 'roller' ? (
+                      <span>
+                        (Ancho × ${PRECIO_POR_METRO_ROLLER.toLocaleString()} + Ancho × Alto × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}) *2 + ${ADICIONAL_FIJO.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span>
+                        Valor x ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}
+                      </span>
+                    )}
+                  </p>
+                  <div className="text-xs mt-2 text-purple-600">
+                    {data.curtainType === 'roller' ? (
+                      <div>
+                        <p><strong>Donde:</strong></p>
+                        <p>• Sistema = Ancho × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}</p>
+                        <p>• Tela = Ancho × Alto × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}</p>
+                        <p>• (Sistema + Tela) × 2 + Adicional fijo = $ {ADICIONAL_FIJO.toLocaleString()}</p>
+
+                      </div>
+                    ) : (
+                        <div>
+                        <p><strong>Donde:</strong></p>
+                        <p>• Valor = Ancho × 2 (${(windowWidth * 2).toFixed(2)})</p>
+                        <p>• Precio por metro = ${PRECIO_POR_METRO.toLocaleString()}</p>
+                        <p>• Adicional fijo = ${ADICIONAL_FIJO.toLocaleString()}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
+          )}
 
             {/* Servicios Adicionales */}
             <div className="space-y-4">
@@ -834,22 +912,24 @@ const handleInstalacionCantidadChange = (e) => {
             </div>
 
             {/* Cálculo del total */}
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-lg mb-3">Cálculo del total:</h4>
-              
-              <div className="space-y-3">
-                {/* Cálculo por cortina */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Precio por cortina:</p>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Fórmula:</span>
-                    <span className="font-medium">
-                      {formulaPersonalizada.activa 
-                        ? `${windowWidth.toFixed(2)}m × ${formulaPersonalizada.multiplicador} × $${formulaPersonalizada.precioPersonalizado.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}`
-                        : `${windowWidth.toFixed(2)}m × 2 × $${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}`
-                      }
-                    </span>
-                  </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-lg mb-3">Cálculo del total:</h4>
+                  
+                  <div className="space-y-3">
+                    {/* Cálculo por cortina */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">Precio por cortina:</p>
+                      <div className="flex justify-between items-center text-sm">
+      <span className="text-gray-600">Fórmula:</span>
+      <span className="font-medium">
+        {formulaPersonalizada.activa 
+            ? `Valor (${formulaPersonalizada.valorPersonalizado}) × $${formulaPersonalizada.precioPersonalizado.toLocaleString()} + $${formulaPersonalizada.adicionalFijo.toLocaleString()}`
+            : data.curtainType === 'roller'
+              ? `(${windowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()} + ${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()}) × 2 + $${ADICIONAL_FIJO.toLocaleString()}` // ← AGREGAR × 2
+              : `Valor (${(formulaPersonalizada.valorPersonalizado || (windowWidth * 2)).toFixed(2)}) × $${PRECIO_POR_METRO.toLocaleString()} + $${ADICIONAL_FIJO.toLocaleString()}`
+          }
+      </span>
+    </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total por cortina:</span>
                     <span className="font-medium">
@@ -948,6 +1028,7 @@ const handleInstalacionCantidadChange = (e) => {
                   windowHeight={windowHeight}
                   PRECIO_POR_METRO={PRECIO_POR_METRO} // Pasar la constante
                   ADICIONAL_FIJO={ADICIONAL_FIJO} // Pasar la constante
+                  PRECIO_POR_METRO_ROLLER={PRECIO_POR_METRO_ROLLER}
                 />
               }
               fileName={`presupuesto-cortinas-${Date.now()}.pdf`}
