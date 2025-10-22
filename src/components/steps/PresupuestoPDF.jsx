@@ -579,9 +579,9 @@ export const PresupuestoPDF = ({
         
         {presupuestosCalculados.map((p, index) => p.servicios.total > 0 && (
           <View key={`serv-det-${index}`}>
-            <Text style={[styles.label, {marginTop: 5, marginBottom: 5, color: '#2c3e50'}]}>
+            {/* <Text style={[styles.label, {marginTop: 5, marginBottom: 5, color: '#2c3e50'}]}>
               Presupuesto {index + 1} ({p.curtainType.charAt(0).toUpperCase() + p.curtainType.slice(1)}):
-            </Text>
+            </Text> */}
             {p.servicios.tomaMedidas > 0 && (
               <View style={styles.calculationRow}>
                 <Text style={styles.calculationDetail}>• Toma de Medidas ({p.servicios.detalle.tomaMedidas}):</Text>
