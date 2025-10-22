@@ -396,16 +396,29 @@ const handleRielesCantidadChange = (e) => {
 };
 
 
+// EN QuoteSummaryStep.jsx
+
 const handleRielesMetrosChange = (e) => {
-  if (isPrintMode) return;
-  const value = parseFloat(e.target.value);
-  if (value >= 0) {
-    setRieles(prev => ({
-      ...prev,
-      metrosPorVentana: value
-    }));
-    setTimeout(() => actualizarTodo(), 0);
-  }
+    if (isPrintMode) return;
+    
+    const rawValue = e.target.value;
+    
+    // Si el campo está vacío, establece 0. De lo contrario, parsea el float.
+    const numericValue = rawValue === "" ? 0 : parseFloat(rawValue);
+
+    // Permitir 0 o cualquier número positivo
+    if (numericValue >= 0 || rawValue === "") {
+        setRieles(prev => ({
+            ...prev,
+            // Guardar 0 si estaba vacío o el valor numérico
+            metrosPorVentana: numericValue
+        }));
+        
+        // Ejecutar la actualización del presupuesto inmediatamente después del estado
+        // Se usa el setTimeout para asegurar que el estado se haya establecido
+        // (aunque con useCallback/useEffect sería mejor, para esta estructura el setTimeout funciona)
+        setTimeout(() => actualizarTodo(), 0); 
+    }
 };
 
 // Handlers para instalación
