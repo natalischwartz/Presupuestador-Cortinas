@@ -221,7 +221,7 @@ const HomePage = () => {
                         </span>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {formatCurrency(calculateTotal(quote))}
+                        {formatCurrency(quote.totalPrice)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">

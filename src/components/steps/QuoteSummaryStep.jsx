@@ -169,7 +169,6 @@ const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
   }
 };
 
-console.log(cantidadCortinas)
 
 const actualizarTodo = () => {
   console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
@@ -180,7 +179,7 @@ const actualizarTodo = () => {
   const totalCortinasActual = totalPorCortinaActual * cantidadCortinas;
   const totalServiciosActual = calcularCostoTomaMedidas() + calcularCostoRieles() + calcularCostoInstalacion();
   const totalGeneralActual = totalCortinasActual + totalServiciosActual;
-  console.log(cantidadCortinas)
+  
   
 
   
