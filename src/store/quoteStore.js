@@ -74,8 +74,7 @@ export const useQuoteStore = create(
         return quotes.find(quote => quote.id === id)
       },
 
-      // NUEVO CÁLCULO SIMPLIFICADO
-      calculateTotal: (quote) => {
+    calculateTotal: (quote) => {
         if (!quote) return 0;
         
         const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
@@ -83,37 +82,51 @@ export const useQuoteStore = create(
         const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
         const BASE_PRICES = get().getBasePrices();
         
-        // Obtener medidas básicas
+        // Obtener y asegurar que las medidas y cantidades son números
         const windowWidth = Number(quote.customWidth) || 0;
         const windowHeight = Number(quote.customHeight) || 0;
         const cantidadCortinas = Number(quote.curtainQuantity) || 1;
         
-        // 1. Cálculo de cortinas (fórmula simplificada)
-          let totalPorCortina;
-          if (quote.formulaPersonalizadaActiva) {
-            //formula personalizadapara cualquier tipo de cortina
-            const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth*2);
+        // --- 1. Cálculo de cortinas ---
+        let totalPorCortina = 0;
+        
+        if (quote.formulaPersonalizadaActiva) {
+            // FÓRMULA PERSONALIZADA
+            const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
             const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
             const adicionalFijo = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
+            console.log(valorPersonalizado);
+            console.log(precioPersonalizado)
+            console.log(adicionalFijo)
 
-            totalPorCortina =valorPersonalizado * precioPersonalizado + adicionalFijo;
-          } else if (quote.curtainType === 'roller') {
-          // LÓGICA ESPECÍFICA PARA ROLLER
-          const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
-          const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
-          const subtotal = (sistema + tela) * 2; 
-          totalPorCortina = subtotal + ADICIONAL_FIJO;
-          
+            totalPorCortina = valorPersonalizado * precioPersonalizado + adicionalFijo;
+            console.log(totalPorCortina);
+        
+        } else if (quote.curtainType === 'roller') {
+            // LÓGICA ESPECÍFICA PARA ROLLER
+            // Fórmula: (sistema + tela) * 2 + ADICIONAL_FIJO
+            const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
+            // Nota: Aquí se asume que la tela es ancho * alto * PRECIO_POR_METRO_ROLLER
+            const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
+            const subtotal = (sistema + tela) * 2; 
+            totalPorCortina = subtotal + ADICIONAL_FIJO;
+            
         } else {
-          // FÓRMULA ESTÁNDAR PARA OTROS TIPOS DE CORTINAS
-            const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
-          totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
+            // FÓRMULA ESTÁNDAR (TRADICIONAL, ROMANA, BLACKOUT)
+            // Se usa windowWidth * 2 como valor base (o el valor guardado si existe, aunque no esté activa la fórmula).
+            // Si quieres que la lógica estándar siempre use (windowWidth * 2), usa:
+            const valor = windowWidth * 2; 
+            
+            // Si quieres permitir que el valor personalizado se use si existe, aunque no esté activa la fórmula (como en QuoteSummaryStep):
+            // const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
+            
+            totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
         }
 
-
         const totalCortinas = totalPorCortina * cantidadCortinas;
+        console.log(totalCortinas)
         
-        // 2. Cálculo de servicios adicionales
+        // --- 2. Cálculo de servicios adicionales ---
         let totalServicios = 0;
         
         // Toma de medidas
@@ -128,9 +141,10 @@ export const useQuoteStore = create(
         // Rieles
         if (quote.necesitaRiel) {
           const cantidadVentanas = Number(quote.cantidadVentanasRiel) || 1;
-          const metrosPorVentana = Number(quote.metrosPorVentana) > 0 
+          // Se usa metrosPorVentana si es positivo, sino windowWidth
+          const metrosPorVentana = (Number(quote.metrosPorVentana) > 0 
             ? Number(quote.metrosPorVentana) 
-            : windowWidth;
+            : windowWidth) || 0; // Asegurarse de que no sea NaN
           totalServicios += cantidadVentanas * metrosPorVentana * BASE_PRICES.RAIL;
         }
         
@@ -141,21 +155,11 @@ export const useQuoteStore = create(
         }
         
         const totalGeneral = totalCortinas + totalServicios;
-        
-        // console.log('Nuevo cálculo simplificado:', {
-        //   id: quote.id,
-        //   curtainType:quote.curtainType,
-        //   windowWidth,
-        //   windowHeight,
-        //   cantidadCortinas,
-        //   totalPorCortina,
-        //   totalCortinas,
-        //   totalServicios,
-        //   totalGeneral
-        // });
+        console.log(totalGeneral)
         
         return totalGeneral;
       },
+     
 
 
       getQuoteTotal: (id) => {

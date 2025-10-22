@@ -155,6 +155,7 @@ const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
       formulaPersonalizadaActiva: formulaPersonalizada.activa,
       formulaMultiplicador: formulaPersonalizada.multiplicador,
       formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
+      formulaValorPersonalizado: formulaPersonalizada.valorPersonalizado,
       adicionalFijo: formulaPersonalizada.adicionalFijo,
       customWidth: data.customWidth,
       customHeight: data.customHeight,
