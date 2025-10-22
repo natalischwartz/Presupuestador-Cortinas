@@ -214,11 +214,11 @@ const actualizarTodo = () => {
   }
 };
 
-useEffect(() => {
-  if (!isPrintMode && data.id) {
-    actualizarTodo();
-  }
-}, [cantidadCortinas]);
+// useEffect(() => {
+//   if (!isPrintMode && data.id) {
+//     actualizarTodo();
+//   }
+// }, [cantidadCortinas]);
 
   
   // Estructura de servicios para el PDF
@@ -462,6 +462,7 @@ const handleInstalacionCantidadChange = (e) => {
         actualizarTodo(); 
     }
 }, [
+    cantidadCortinas,
     tomaMedidas.activo, 
     tomaMedidas.cantidadVentanas, 
     tomaMedidas.ubicacion,
