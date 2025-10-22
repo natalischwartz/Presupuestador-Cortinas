@@ -382,13 +382,13 @@ export const PresupuestoPDF = ({
 }) => {
   
    // Asegurarnos de que data sea un array
-  // const presupuestos = Array.isArray(data) ? data : [data];
+  const presupuestos = Array.isArray(data) ? data : [data];
 
-  // console.log("presupuestos", presupuestos)
+  console.log("presupuestos", presupuestos)
 
   if (!data) return null;
   // Preparar datos de los presupuestos, calculando todo internamente
-  const presupuestosCalculados = data.map((presupuesto, index) => {
+  const presupuestosCalculados = presupuestos.map((presupuesto, index) => {
     
     const cantidadCortinas = Number(presupuesto.curtainQuantity) || 1;
     
