@@ -276,7 +276,6 @@ const handleCantidadChange = (e) => {
     ...prev,
     activa: !prev.activa
   }));
-  setTimeout(() => actualizarTodo(), 0);
 };
 
 const handleMultiplicadorChange = (e) => {
@@ -295,7 +294,6 @@ const handleMultiplicadorChange = (e) => {
       ...prev,
       multiplicador: numericValue
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -316,7 +314,6 @@ const handleValorPersonalizadoChange = (e) => {
       ...prev,
       valorPersonalizado: numericValue
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -336,7 +333,6 @@ const handlePrecioPersonalizadoChange = (e) => {
       ...prev,
       precioPersonalizado: numericValue
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -348,7 +344,6 @@ const handleTomaMedidasToggle = () => {
     ...prev,
     activo: !prev.activo
   }));
-  setTimeout(() => actualizarTodo(), 0);
 };
 
 const handleTomaMedidasCantidadChange = (e) => {
@@ -359,7 +354,6 @@ const handleTomaMedidasCantidadChange = (e) => {
       ...prev,
       cantidadVentanas: value
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -369,7 +363,6 @@ const handleTomaMedidasUbicacionChange = (ubicacion) => {
     ...prev,
     ubicacion
   }));
-  setTimeout(() => actualizarTodo(), 0);
 };
 
 // Handlers para rieles
@@ -379,7 +372,6 @@ const handleRielesToggle = () => {
     ...prev,
     activo: !prev.activo
   }));
-  setTimeout(() => actualizarTodo(), 0);
 };
 
 
@@ -391,7 +383,6 @@ const handleRielesCantidadChange = (e) => {
       ...prev,
       cantidadVentanas: value
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -412,12 +403,7 @@ const handleRielesMetrosChange = (e) => {
             ...prev,
             // Guardar 0 si estaba vacío o el valor numérico
             metrosPorVentana: numericValue
-        }));
-        
-        // Ejecutar la actualización del presupuesto inmediatamente después del estado
-        // Se usa el setTimeout para asegurar que el estado se haya establecido
-        // (aunque con useCallback/useEffect sería mejor, para esta estructura el setTimeout funciona)
-        setTimeout(() => actualizarTodo(), 0); 
+        })); 
     }
 };
 
@@ -428,7 +414,6 @@ const handleInstalacionToggle = () => {
     ...prev,
     activo: !prev.activo
   }));
-  setTimeout(() => actualizarTodo(), 0);
 };
 
 const handleInstalacionCantidadChange = (e) => {
@@ -439,7 +424,6 @@ const handleInstalacionCantidadChange = (e) => {
       ...prev,
       cantidadVentanas: value
     }));
-    setTimeout(() => actualizarTodo(), 0);
   }
 };
 
@@ -458,7 +442,6 @@ const handleInstalacionCantidadChange = (e) => {
       ...prev,
       editando: false
     }));
-     setTimeout(() => actualizarTodo(), 0); // ← AGREGAR AQUÍ
   };
 
   const handleCancelarEdicion = () => {
@@ -472,6 +455,29 @@ const handleInstalacionCantidadChange = (e) => {
     
   };
 
+  useEffect(() => {
+    // Solo actualiza si no estamos en modo impresión y si hay un ID de cotización
+    if (!isPrintMode && data.id) {
+        // Esta dependencia se activará con cualquier cambio en estos estados
+        actualizarTodo(); 
+    }
+}, [
+    tomaMedidas.activo, 
+    tomaMedidas.cantidadVentanas, 
+    tomaMedidas.ubicacion,
+    rieles.activo,
+    rieles.cantidadVentanas,
+    rieles.metrosPorVentana, // <-- ¡Ahora con el valor de cero guardado, esto funciona!
+    instalacion.activo,
+    instalacion.cantidadVentanas,
+    formulaPersonalizada.activa,
+    formulaPersonalizada.multiplicador,
+    formulaPersonalizada.precioPersonalizado,
+    formulaPersonalizada.valorPersonalizado,
+    formulaPersonalizada.adicionalFijo,
+    data.id, 
+    isPrintMode // Dependencias necesarias si se pasan al hook
+]);
   
 
   return (
