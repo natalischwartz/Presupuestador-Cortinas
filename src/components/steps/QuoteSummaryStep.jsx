@@ -209,6 +209,7 @@ const actualizarTodo = () => {
       formulaPersonalizadaActiva: formulaPersonalizada.activa,
       formulaMultiplicador: formulaPersonalizada.multiplicador,
       formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
+      formulaValorPersonalizado : formulaPersonalizada.valorPersonalizado,
       adicionalFijo: formulaPersonalizada.adicionalFijo
     });
   }
