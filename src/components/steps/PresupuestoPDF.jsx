@@ -1,20 +1,21 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { useQuoteStore } from "@/store/quoteStore";
 
-const PRECIO_POR_METRO = 60000; // Valor de ejemplo, asume el mismo que VITE_PRECIO_POR_METRO
-const PRECIO_POR_METRO_ROLLER = 25000; // Valor de ejemplo
-const ADICIONAL_FIJO = 15000; // Valor de ejemplo
+const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO);
+const PRECIO_POR_METRO_ROLLER = Number(import.meta.env.VITE_PRECIO_POR_METRO_ROLLER);
+const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO);
+
 const BASE_PRICES = {
-  CONFECTION: 0, // No usado directamente en el cálculo final de cortinas
-  CONFECTION_EXTRA: 0,
-  RAIL: 10000, // Valor de ejemplo para rieles
-  INSTALLATION: 8000, // Valor de ejemplo para instalación
-  MEASUREMENT_CABA: 5000, // Valor de ejemplo para toma de medidas CABA
-  MEASUREMENT_GBA: 8000, // Valor de ejemplo para toma de medidas GBA
+  CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE),
+  CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE),
+  RAIL: Number(import.meta.env.VITE_RAIL_PRICE), 
+  INSTALLATION: Number(import.meta.env.VITE_PRICE_INSTALLATION), 
+  MEASUREMENT_CABA: Number(import.meta.env.VITE_PRICE_MEASUREMENT_CABA),
+  MEASUREMENT_GBA: Number(import.meta.env.VITE_PRICE_MEASUREMENT_GBA), 
 };
 
-
+const VENDEDOR_EMAIL = "schwartznatali@gmail.com"; 
+const VENDEDOR_TELEFONO = "+54 9 11 6162-2602";
 
 const styles = StyleSheet.create({
   page: {
@@ -268,7 +269,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: '#3E6553',
     textAlign: 'center',
-  }
+  },
+  vendedorContact: { // Nuevo estilo para tu contacto
+    fontSize: 10,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginTop: 15,
+  },
+  serviceCalculationCard: { 
+    backgroundColor: '#f8f9fa',
+    borderColor: '#e0e0e0',
+    border: '1 solid #e0e0e0',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  calculationDetailTitle: { 
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#2c3e50',
+  },
 });
   
 
@@ -297,25 +318,32 @@ function formatMeasurement(value) {
   return value.toFixed(2);
 }
 
+
 // Lógica de cálculo de servicio
 const calcularCostoServicio = (tipo, presupuesto) => {
   const { necesitaTM, cantidadVentanas, ubicacionTM, necesitaRiel, cantidadVentanasRiel, metrosPorVentana, hasInstallation, cantidadVentanasInstalacion, customWidth } = presupuesto;
+  console.log("cantidadVentanasRiel --->", cantidadVentanasRiel)
 
-  switch (tipo) {
-    case 'tomaMedidas':
-      if (!necesitaTM) return 0;
+  let result = 0;
+
+  if (tipo === "tomaMedidas" & necesitaTM){
       const precioTM = ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA;
-      return (cantidadVentanas || 1) * precioTM;
-    case 'rieles':
-      if (!necesitaRiel) return 0;
-      const metros = (metrosPorVentana > 0 ? metrosPorVentana : parseFloat(customWidth || 0)) || 0;
-      return (cantidadVentanasRiel || 1) * metros * BASE_PRICES.RAIL;
-    case 'instalacion':
-      if (!hasInstallation) return 0;
-      return (cantidadVentanasInstalacion || 1) * BASE_PRICES.INSTALLATION;
-    default:
-      return 0;
+      result = (cantidadVentanas || 1) * precioTM;
+      return result;
   }
+
+  if (tipo === "rieles" & necesitaRiel) {
+      const metros = (metrosPorVentana > 0 ? metrosPorVentana : parseFloat(customWidth || 0)) || 0;
+      result = (cantidadVentanasRiel || 1) * metros * BASE_PRICES.RAIL;
+      return result;
+  }
+
+  if (tipo === "instalacion" && hasInstallation) {
+      result = (cantidadVentanasInstalacion || 1) * BASE_PRICES.INSTALLATION;
+      return result;
+  }
+
+  return result;
 };
 
 // Lógica de cálculo de cortina (replicando QuoteSummaryStep)
@@ -348,15 +376,19 @@ const calcularTotalPorCortina = (presupuesto) => {
 
 
 
+
 export const PresupuestoPDF = ({ 
   data,
 }) => {
   
-  // Asegurarnos de que data sea un array
-  const presupuestos = Array.isArray(data) ? data : [data];
+   // Asegurarnos de que data sea un array
+  // const presupuestos = Array.isArray(data) ? data : [data];
 
+  // console.log("presupuestos", presupuestos)
+
+  if (!data) return null;
   // Preparar datos de los presupuestos, calculando todo internamente
-  const presupuestosCalculados = presupuestos.map((presupuesto, index) => {
+  const presupuestosCalculados = data.map((presupuesto, index) => {
     
     const cantidadCortinas = Number(presupuesto.curtainQuantity) || 1;
     
@@ -369,6 +401,11 @@ export const PresupuestoPDF = ({
     const costoRieles = calcularCostoServicio('rieles', presupuesto);
     const costoInstalacion = calcularCostoServicio('instalacion', presupuesto);
     const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
+    console.log({
+      costoTomaMedidas,
+      costoRieles,
+      costoInstalacion
+    })
     
     // 3. GENERACIÓN DE CÁLCULO DETALLE
     const getServiceCalculationDetail = (tipo) => {
@@ -390,8 +427,7 @@ export const PresupuestoPDF = ({
       }
     };
     
-
-    return {
+    const result = {
       ...presupuesto,
       index: index + 1,
       servicios: {
@@ -409,8 +445,8 @@ export const PresupuestoPDF = ({
         totalPorCortina,
         totalCortinas,
         cantidadCortinas,
-        windowWidth: Number(presupuesto.customWidth) || 0,
-        windowHeight: Number(presupuesto.customHeight) || 0,
+        windowWidth: Number.parseFloat(presupuesto.customWidth) || 0,
+        windowHeight: Number.parseFloat(presupuesto.customHeight) || 0,
         // Info adicional
         usandoFormulaPersonalizada: presupuesto.formulaPersonalizadaActiva || false,
         precioPorMetro: presupuesto.formulaPersonalizadaActiva ? (presupuesto.formulaPrecioPersonalizado || PRECIO_POR_METRO) : PRECIO_POR_METRO,
@@ -418,7 +454,12 @@ export const PresupuestoPDF = ({
       },
       totalIndividual: totalCortinas + totalServicios
     };
+
+    console.log("Result getServiceCalculationDetail:", result);
+    return result;
   });
+
+  
 
   // Calcular totales generales
   const totalGeneralCortinas = presupuestosCalculados.reduce((sum, p) => sum + p.cortinas.totalCortinas, 0);
@@ -523,87 +564,89 @@ export const PresupuestoPDF = ({
             </View>
           </View>
 
-           {/* Sección de Servicios Adicionales */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+          {/* Sección de Servicios Adicionales */}
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>
               Servicios y Accesorios
+      </Text>
+
+      {totalGeneralServicios > 0 && (
+      // Mostrar servicios con costo
+      <View style={styles.serviceCalculationCard}>
+        <Text style={styles.calculationDetailTitle}>
+          Detalle de Costos Adicionales
+        </Text>
+        
+        {presupuestosCalculados.map((p, index) => p.servicios.total > 0 && (
+          <View key={`serv-det-${index}`}>
+            <Text style={[styles.label, {marginTop: 5, marginBottom: 5, color: '#2c3e50'}]}>
+              Presupuesto {index + 1} ({p.curtainType.charAt(0).toUpperCase() + p.curtainType.slice(1)}):
             </Text>
-
-            {totalGeneralServicios > 0 ? (
-              // Mostrar servicios con costo
-              <View style={styles.serviceCalculationCard}>
-                <Text style={styles.calculationDetailTitle}>
-                  Detalle de Costos Adicionales
+            {p.servicios.tomaMedidas > 0 && (
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationDetail}>• Toma de Medidas ({p.servicios.detalle.tomaMedidas}):</Text>
+                <Text style={styles.calculationDetail}>
+                  ${formatNumber(p.servicios.tomaMedidas)}
                 </Text>
-                
-                {presupuestosCalculados.map((p, index) => p.servicios.total > 0 && (
-                  <View key={`serv-det-${index}`}>
-                    <Text style={[styles.label, {marginTop: 5, marginBottom: 5, color: '#2c3e50'}]}>
-                      Presupuesto {index + 1} ({p.curtainType.charAt(0).toUpperCase() + p.curtainType.slice(1)}):
-                    </Text>
-                    {p.servicios.tomaMedidas > 0 && (
-                      <View style={styles.calculationRow}>
-                        <Text style={styles.calculationDetail}>• Toma de Medidas ({p.servicios.detalle.tomaMedidas}):</Text>
-                        <Text style={styles.calculationDetail}>
-                          ${formatNumber(p.servicios.tomaMedidas)}
-                        </Text>
-                      </View>
-                    )}
-                    {p.servicios.rieles > 0 && (
-                      <View style={styles.calculationRow}>
-                        <Text style={styles.calculationDetail}>• Rieles ({p.servicios.detalle.rieles}):</Text>
-                        <Text style={styles.calculationDetail}>
-                          ${formatNumber(p.servicios.rieles)}
-                        </Text>
-                      </View>
-                    )}
-                    {p.servicios.instalacion > 0 && (
-                      <View style={styles.calculationRow}>
-                        <Text style={styles.calculationDetail}>• Instalación ({p.servicios.detalle.instalacion}):</Text>
-                        <Text style={styles.calculationDetail}>
-                          ${formatNumber(p.servicios.instalacion)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                ))}
-
-                <View style={[styles.totalRow, {borderTop: '1 solid #ccc', marginTop: 10, paddingTop: 8}]}>
-                  <Text style={styles.totalLabel}>TOTAL SERVICIOS:</Text>
-                  <Text style={styles.totalAmount}>${formatNumber(totalGeneralServicios)}</Text>
-                </View>
               </View>
-
-            ) : (
-              // Mostrar servicios incluidos sin cargo
-              <View style={styles.includedServicesCard}>
-                <Text style={styles.includedServiceTitle}>
-                  ✓ Servicios Incluidos / No Solicitados
+            )}
+            {p.servicios.rieles > 0 && (
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationDetail}>• Rieles ({p.servicios.detalle.rieles}):</Text>
+                <Text style={styles.calculationDetail}>
+                  ${formatNumber(p.servicios.rieles)}
                 </Text>
-                
-                <View style={styles.row}>
-                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Toma de medidas:</Text>
-                  <Text style={[styles.includedServiceText, {flex: 1}]}>
-                    {tomaMedidasSolicitado ? 'Solicitado, pero costo $0' : 'Sin cargo'}
-                  </Text>
-                </View>
-
-                <View style={styles.row}>
-                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Colocación/Instalación:</Text>
-                  <Text style={[styles.includedServiceText, {flex: 1}]}>
-                    {instalacionSolicitado ? 'Solicitado, pero costo $0' : 'Sin cargo'}
-                  </Text>
-                </View>
-                
-                <View style={styles.row}>
-                  <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Rieles:</Text>
-                  <Text style={[styles.includedServiceText, {flex: 1}]}>
-                    {rielesSolicitado ? 'Solicitado, pero costo $0' : 'No solicitado'}
-                  </Text>
-                </View>
+              </View>
+            )}
+            {p.servicios.instalacion > 0 && (
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationDetail}>• Instalación ({p.servicios.detalle.instalacion}):</Text>
+                <Text style={styles.calculationDetail}>
+                  ${formatNumber(p.servicios.instalacion)}
+                </Text>
               </View>
             )}
           </View>
+        ))}
+          <View style={[styles.totalRow, {borderTop: '1 solid #ccc', marginTop: 10, paddingTop: 8}]}>
+          <Text style={styles.totalLabel}>TOTAL SERVICIOS:</Text>
+          <Text style={styles.totalAmount}>${formatNumber(totalGeneralServicios)}</Text>
+        </View>
+      </View>
+      )}
+
+{/* 2. Bloque de Servicios Incluidos (SIEMPRE aparece) */}
+<View style={styles.includedServicesCard}>
+    <Text style={styles.includedServiceTitle}>
+        ✓ Servicios Incluidos / Sin Costo
+    </Text>
+    
+    <View style={styles.row}>
+        <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Toma de medidas:</Text>
+        <Text style={[styles.includedServiceText, {flex: 1}]}>
+            {/* Muestra "Solicitado, pero costo $0" solo si fue solicitado y su costo fue cero */}
+            {tomaMedidasSolicitado && totalTomaMedidas === 0 ? 'Solicitado, pero costo $0' : 'Sin cargo'}
+        </Text>
+    </View>
+
+    <View style={styles.row}>
+        <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Colocación/Instalación:</Text>
+        <Text style={[styles.includedServiceText, {flex: 1}]}>
+            {/* Muestra "Solicitado, pero costo $0" solo si fue solicitado y su costo fue cero */}
+            {instalacionSolicitado && totalInstalacion === 0 ? 'Solicitado, pero costo $0' : 'Sin cargo'}
+        </Text>
+    </View>
+    
+    {/* Si quieres incluir los rieles aquí como "No solicitado" */}
+    {/* <View style={styles.row}>
+        <Text style={[styles.label, {color: '#3E6553', flex: 2}]}>• Rieles:</Text>
+        <Text style={[styles.includedServiceText, {flex: 1}]}>
+            {rielesSolicitado && totalRieles === 0 ? 'Solicitado, pero costo $0' : 'No solicitado'}
+        </Text>
+    </View> */}
+        </View>
+        {/* 👆 FIN DEL BLOQUE DE INCLUIDOS */}
+    </View>
 
          
           {/* Resumen Final */}
@@ -640,6 +683,12 @@ export const PresupuestoPDF = ({
             <Text style={styles.noteText}>• Tiempo de entrega estimado: 10-20 días hábiles</Text>
             <Text style={styles.noteText}>• Garantía de 1 año en confección</Text>
             <Text style={styles.noteText}>• Formas de pago: Efectivo, transferencia, Mercado Pago, Homebanking</Text>
+          </View>
+
+          <View style={{marginTop: 10, borderTop: '1 solid #e0e0e0', paddingTop: 10}}>
+            <Text style={styles.vendedorContact}>
+                Contacto: {VENDEDOR_EMAIL} | Teléfono: {VENDEDOR_TELEFONO}
+            </Text>
           </View>
         </View>
       </Page>

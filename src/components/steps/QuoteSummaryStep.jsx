@@ -42,6 +42,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     cantidadVentanas: isPrintMode ? data.cantidadVentanasRiel : data.cantidadVentanasRiel || 1,
     metrosPorVentana: isPrintMode ? data.metrosPorVentana : data.metrosPorVentana || 0
   });
+   console.log(data.metrosPorVentana)
 
   const [instalacion, setInstalacion] = useState({
     activo: isPrintMode ? data.hasInstallation : data.hasInstallation || false,
@@ -118,6 +119,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     const metros = rieles.metrosPorVentana > 0 ? rieles.metrosPorVentana : windowWidth;
     return rieles.cantidadVentanas * metros * BASE_PRICES.RAIL;
   };
+ 
 
   const calcularCostoInstalacion = () => {
     if (!instalacion.activo) return 0;
@@ -131,6 +133,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   const costoInstalacion = calcularCostoInstalacion();
   const totalCortinas = totalPorCortina * cantidadCortinas;
   const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
+  console.log(costoRieles)
  
   console.log(cantidadCortinas)
 
