@@ -233,7 +233,7 @@ export const CurtainQuoteWizard = () => {
             <Button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="flex items-center gap-2 bg-gradient-primary"
+              className="flex items-center gap-2 bg-gradient-warm text-input"
             >
               Siguiente
               <ChevronRight className="h-4 w-4" />
@@ -251,7 +251,7 @@ export const CurtainQuoteWizard = () => {
               
               <Button
                 onClick={handleSaveQuote}
-                className="flex items-center gap-2 bg-gradient-primary"
+                className="flex items-center gap-2 bg-gradient-warm"
               >
                 <Save className="h-4 w-4" />
                 {editingQuote ? 'Actualizar' : 'Guardar Presupuesto'}

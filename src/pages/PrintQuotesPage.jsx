@@ -58,7 +58,7 @@ const PrintQuotesPage = () => {
             </Button>
             <Button
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-gradient-primary"
+              className="flex items-center gap-2 bg-gradient-warm"
             >
               <Printer className="h-4 w-4" />
               Imprimir

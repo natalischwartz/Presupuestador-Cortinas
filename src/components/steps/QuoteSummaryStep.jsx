@@ -42,7 +42,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     cantidadVentanas: isPrintMode ? data.cantidadVentanasRiel : data.cantidadVentanasRiel || 1,
     metrosPorVentana: isPrintMode ? data.metrosPorVentana : data.metrosPorVentana || 0
   });
-   console.log(data.metrosPorVentana)
+  //  console.log(data.metrosPorVentana)
 
   const [instalacion, setInstalacion] = useState({
     activo: isPrintMode ? data.hasInstallation : data.hasInstallation || false,
@@ -133,7 +133,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   const costoInstalacion = calcularCostoInstalacion();
   const totalCortinas = totalPorCortina * cantidadCortinas;
   const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
-  console.log(costoRieles)
+  // console.log(costoRieles)
  
   console.log(cantidadCortinas)
 
@@ -166,7 +166,7 @@ const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
       totalServicios: totalServiciosActual
     };
     
-    console.log('🔄 Actualizando store:', datosActualizados);
+    // console.log('🔄 Actualizando store:', datosActualizados);
     
     store.updateQuote(data.id, datosActualizados);
   }
@@ -174,7 +174,7 @@ const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
 
 
 const actualizarTodo = () => {
-  console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
+  // console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
 
 
   // RECALCULAR todos los valores con la cantidad actual

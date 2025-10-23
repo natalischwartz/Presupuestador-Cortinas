@@ -60,11 +60,11 @@ export const useQuoteStore = create(
         const { quotes, selectedQuotes } = get();
         const selected = quotes.filter(quote => selectedQuotes.includes(quote.id));
         
-        console.log('Quotes seleccionadas:', {
-          totalQuotes: quotes.length,
-          selectedIds: selectedQuotes,
-          selectedQuotes: selected.length
-        });
+        // console.log('Quotes seleccionadas:', {
+        //   totalQuotes: quotes.length,
+        //   selectedIds: selectedQuotes,
+        //   selectedQuotes: selected.length
+        // });
         
         return selected;
       },
@@ -95,12 +95,12 @@ export const useQuoteStore = create(
             const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
             const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
             const adicionalFijo = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
-            console.log(valorPersonalizado);
-            console.log(precioPersonalizado)
-            console.log(adicionalFijo)
+            // console.log(valorPersonalizado);
+            // console.log(precioPersonalizado)
+            // console.log(adicionalFijo)
 
             totalPorCortina = valorPersonalizado * precioPersonalizado + adicionalFijo;
-            console.log(totalPorCortina);
+            // console.log(totalPorCortina);
         
         } else if (quote.curtainType === 'roller') {
             // LÓGICA ESPECÍFICA PARA ROLLER
@@ -124,7 +124,7 @@ export const useQuoteStore = create(
         }
 
         const totalCortinas = totalPorCortina * cantidadCortinas;
-        console.log(totalCortinas)
+        // console.log(totalCortinas)
         
         // --- 2. Cálculo de servicios adicionales ---
         let totalServicios = 0;
@@ -155,7 +155,7 @@ export const useQuoteStore = create(
         }
         
         const totalGeneral = totalCortinas + totalServicios;
-        console.log(totalGeneral)
+        // console.log(totalGeneral)
         
         return totalGeneral;
       },

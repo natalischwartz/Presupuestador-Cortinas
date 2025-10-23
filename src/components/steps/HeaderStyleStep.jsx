@@ -161,7 +161,7 @@ const StyleCard = ({ style, isSelected, onSelect }) => (
     <CardContent className="p-4">
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${
-          isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary'
+          isSelected ? 'bg-primary text-input' : 'bg-secondary'
         }`}>
           <Waves className="h-4 w-4" />
         </div>

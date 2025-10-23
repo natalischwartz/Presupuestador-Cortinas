@@ -27,7 +27,7 @@ export const Watermark = () => {
       </div>
 
       {/* 3. Marca superior izquierda (mínima) */}
-      <div className="fixed top-3 left-6 pointer-events-none z-[9999] opacity-15">
+      <div className="fixed top-3 left-6 pointer-events-none z-[9999] opacity-30">
         <img src={logo} alt="" className="w-20  rotate-[-12deg]" />
       </div>
     </>

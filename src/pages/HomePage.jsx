@@ -69,7 +69,7 @@ const HomePage = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-primary mb-2">
                 Presupuestos de Cortinas
               </h1>
               <p className="text-muted-foreground">
@@ -81,7 +81,7 @@ const HomePage = () => {
                 useQuoteStore.getState().clearCurrentQuote();
                 navigate("/cargar-cortina");
               }}
-              className="bg-gradient-primary hover:opacity-90 shadow-elegant"
+              className="bg-gradient-warm text-muted hover:opacity-90 shadow-elegant"
               size="lg"
             >
               <Plus className="h-5 w-5 mr-2" />
@@ -195,7 +195,7 @@ const HomePage = () => {
                   {quotes.map((quote) => (
                     <TableRow key={quote.id} className="border-border/30">
                       <TableCell>
-                        <Checkbox
+                        <Checkbox className="text-input"
                           checked={selectedQuotes.includes(quote.id)}
                           onCheckedChange={() => toggleQuoteSelection(quote.id)}
                         />

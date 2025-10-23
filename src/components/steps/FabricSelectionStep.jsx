@@ -163,14 +163,14 @@ export const FabricSelectionStep = ({ data, updateData }) => {
             <Card
               key={fabric._id}
               className={`cursor-pointer transition-all duration-300 hover:shadow-soft ${
-                isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
+                isSelected ? 'ring-2 ring-primary bg-primary/5'  : ''
               }`}
               onClick={() => handleFabricSelect(fabric)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
-                    isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary'
+                    isSelected ? 'bg-primary text-input' : 'bg-secondary'
                   }`}>
                     <SwatchBook className="h-4 w-4" />
                   </div>
