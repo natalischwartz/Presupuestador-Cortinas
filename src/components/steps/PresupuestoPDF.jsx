@@ -9,9 +9,9 @@ const BASE_PRICES = {
   CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE),
   CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE),
   RAIL: Number(import.meta.env.VITE_RAIL_PRICE), 
-  INSTALLATION: Number(import.meta.env.VITE_PRICE_INSTALLATION), 
-  MEASUREMENT_CABA: Number(import.meta.env.VITE_PRICE_MEASUREMENT_CABA),
-  MEASUREMENT_GBA: Number(import.meta.env.VITE_PRICE_MEASUREMENT_GBA), 
+  INSTALLATION: Number(import.meta.env.VITE_INSTALLATION_PRICE), 
+  MEASUREMENT_CABA: Number(import.meta.env.VITE_MEASUREMENT_CABA_PRICE),
+  MEASUREMENT_GBA: Number(import.meta.env.VITE_MEASUREMENT_GBA_PRICE), 
 };
 
 const VENDEDOR_EMAIL = "schwartznatali@gmail.com"; 
@@ -398,8 +398,11 @@ export const PresupuestoPDF = ({
     
     // 2. CÁLCULO DE SERVICIOS
     const costoTomaMedidas = calcularCostoServicio('tomaMedidas', presupuesto);
+    console.log("costo tm--->", costoTomaMedidas)
     const costoRieles = calcularCostoServicio('rieles', presupuesto);
+    console.log("costo rieles--->", costoRieles)
     const costoInstalacion = calcularCostoServicio('instalacion', presupuesto);
+    console.log("costo instalacion-->", costoInstalacion)
     const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
     console.log({
       costoTomaMedidas,
@@ -453,9 +456,13 @@ export const PresupuestoPDF = ({
         adicionalFijo: presupuesto.adicionalFijo || ADICIONAL_FIJO
       },
       totalIndividual: totalCortinas + totalServicios
+      
     };
-
+    console.log("total individual:" , result.totalIndividual)
+    console.log("totalCortinas-->", result.cortinas.totalCortinas)
+    console.log("total servicios -->" , result.servicios.total)
     console.log("Result getServiceCalculationDetail:", result);
+    
     return result;
   });
 

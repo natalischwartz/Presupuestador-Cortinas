@@ -138,15 +138,16 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   console.log(cantidadCortinas)
 
 const totalGeneral = totalCortinas + totalServicios;
+console.log(totalGeneral)
 
    // Función para actualizar el store de Zustand
-const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
+const actualizarStore = (totalGeneral, totalServicios) => {
   if (!isPrintMode && data.id) {
     const store = useQuoteStore.getState();
     
     const datosActualizados = {
       curtainQuantity: cantidadCortinas,
-      totalPrice: totalGeneralActual,
+      totalPrice: totalGeneral,
       necesitaTM: tomaMedidas.activo,
       cantidadVentanas: tomaMedidas.cantidadVentanas,
       ubicacionTM: tomaMedidas.ubicacion,
@@ -163,7 +164,7 @@ const actualizarStore = (totalGeneralActual, totalServiciosActual) => {
       customWidth: data.customWidth,
       customHeight: data.customHeight,
       curtainType: data.curtainType,
-      totalServicios: totalServiciosActual
+      totalServicios: totalServicios
     };
     
     // console.log('🔄 Actualizando store:', datosActualizados);
