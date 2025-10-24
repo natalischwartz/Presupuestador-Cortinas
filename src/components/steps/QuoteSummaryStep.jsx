@@ -85,7 +85,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     
     if (formulaPersonalizada.activa) {
       // Usar fórmula personalizada
-     const valorPersonalizado = formulaPersonalizada.valorPersonalizado || (windowWidth * 2);
+     const valorPersonalizado = Number(formulaPersonalizada.valorPersonalizado || (windowWidth * 2));
      return valorPersonalizado * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
     } 
     
@@ -98,7 +98,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
    return (sistema + tela)*2 + ADICIONAL_FIJO;
   }else {
      // FÓRMULA TRADICIONAL: Valor × Precio + Adicional Fijo
-    const valor = formulaPersonalizada.valorPersonalizado || (windowWidth * 2);
+    const valor = Number(formulaPersonalizada.valorPersonalizado) || (windowWidth * 2);
     return valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
   }
   
