@@ -95,9 +95,6 @@ export const useQuoteStore = create(
             const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
             const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
             const adicionalFijo = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
-            // console.log(valorPersonalizado);
-            // console.log(precioPersonalizado)
-            // console.log(adicionalFijo)
 
             totalPorCortina = valorPersonalizado * precioPersonalizado + adicionalFijo;
             // console.log(totalPorCortina);
@@ -115,7 +112,7 @@ export const useQuoteStore = create(
             // FÓRMULA ESTÁNDAR (TRADICIONAL, ROMANA, BLACKOUT)
             // Se usa windowWidth * 2 como valor base (o el valor guardado si existe, aunque no esté activa la fórmula).
             // Si quieres que la lógica estándar siempre use (windowWidth * 2), usa:
-            const valor = windowWidth * 2; 
+            const valor = Number(windowWidth * 2); 
             
             // Si quieres permitir que el valor personalizado se use si existe, aunque no esté activa la fórmula (como en QuoteSummaryStep):
             // const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);

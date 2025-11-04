@@ -49,6 +49,8 @@ export const CurtainQuoteWizard = () => {
       phone: "",
     },
     // windows: [],
+    totalPrice: 0,
+    totalServicios:0,
     curtainType: null, //
     hasInstallation: null, //
     heightOption: null, //
@@ -146,8 +148,10 @@ export const CurtainQuoteWizard = () => {
 
   const handleSaveQuote = () => {
     if (editingQuote) {
+      console.log("EDITANDO ->", data)
       updateQuote(editingQuote.id, data);
     } else {
+      console.log("AGREGANDO ->", data)
       addQuote(data);
     }
     navigate("/home-page");

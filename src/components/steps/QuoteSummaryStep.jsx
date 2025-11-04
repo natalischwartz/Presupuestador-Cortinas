@@ -53,31 +53,32 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   // Obtener medidas
   const getWindowHeight = () => {
     if (data.customHeight) {
-      return parseFloat(data.customHeight);
+      return Number(data.customHeight);
     }
     return 0;
   };
 
   const getWindowWidth = () => {
     if (data.customWidth) {
-      return parseFloat(data.customWidth);
+      return Number(data.customWidth);
     }
     return 0;
   };
 
   const windowHeight = getWindowHeight();
   const windowWidth = getWindowWidth();
+  console.log("window width--->", windowWidth)
 
   // Estado para la fórmula personalizada
   const [formulaPersonalizada, setFormulaPersonalizada] = useState({
     activa: data.formulaPersonalizadaActiva || false,
-    valorPersonalizado : data.formulaValorPersonalizado || (windowWidth*2),
-    multiplicador: data.formulaMultiplicador || 2,
-    precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO,
-    adicionalFijo: data.adicionalFijo || ADICIONAL_FIJO,
+    valorPersonalizado : Number(data.formulaValorPersonalizado) || (windowWidth*2),
+    multiplicador: Number(data.formulaMultiplicador) || 2,
+    precioPersonalizado: Number(data.formulaPrecioPersonalizado) || PRECIO_POR_METRO,
+    adicionalFijo: Number(data.adicionalFijo) || ADICIONAL_FIJO,
     editando: false
   });
-
+ 
 
   // Calcular total por cortina - con fórmula personalizada o estándar
   const calcularTotalPorCortina = () => {
@@ -85,7 +86,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
     
     if (formulaPersonalizada.activa) {
       // Usar fórmula personalizada
-     const valorPersonalizado = Number(formulaPersonalizada.valorPersonalizado || (windowWidth * 2));
+     const valorPersonalizado = Number(formulaPersonalizada.valorPersonalizado) || (windowWidth * 2);
      return valorPersonalizado * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
     } 
     
@@ -116,7 +117,7 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
 
   const calcularCostoRieles = () => {
     if (!rieles.activo) return 0;
-    const metros = rieles.metrosPorVentana > 0 ? rieles.metrosPorVentana : windowWidth;
+    const metros = Number(rieles.metrosPorVentana) > 0 ? Number(rieles.metrosPorVentana) : windowWidth;
     return rieles.cantidadVentanas * metros * BASE_PRICES.RAIL;
   };
  
@@ -133,17 +134,18 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
   const costoInstalacion = calcularCostoInstalacion();
   const totalCortinas = totalPorCortina * cantidadCortinas;
   const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
-  // console.log(costoRieles)
+  // console.log("total servicios--->",totalServicios)
  
-  console.log(cantidadCortinas)
+  // console.log(cantidadCortinas)
 
 const totalGeneral = totalCortinas + totalServicios;
-console.log(totalGeneral)
 
    // Función para actualizar el store de Zustand
 const actualizarStore = (totalGeneral, totalServicios) => {
   if (!isPrintMode && data.id) {
     const store = useQuoteStore.getState();
+    
+    console.log("totalGeneral", totalGeneral)
     
     const datosActualizados = {
       curtainQuantity: cantidadCortinas,
@@ -166,11 +168,12 @@ const actualizarStore = (totalGeneral, totalServicios) => {
       curtainType: data.curtainType,
       totalServicios: totalServicios
     };
-    
-    // console.log('🔄 Actualizando store:', datosActualizados);
+
+    console.log('🔄 Actualizando store:', datosActualizados);
     
     store.updateQuote(data.id, datosActualizados);
   }
+    console.log("2")
 };
 
 
@@ -178,22 +181,30 @@ const actualizarTodo = () => {
   // console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
 
 
+  console.log("actualizarTodoactualizarTodoactualizarTodoactualizarTodo")
+
   // RECALCULAR todos los valores con la cantidad actual
   const totalPorCortinaActual = calcularTotalPorCortina();
   const totalCortinasActual = totalPorCortinaActual * cantidadCortinas;
   const totalServiciosActual = calcularCostoTomaMedidas() + calcularCostoRieles() + calcularCostoInstalacion();
   const totalGeneralActual = totalCortinasActual + totalServiciosActual;
   
-  
+  setData(prevData => ({
+    ...prevData,
+    totalPrice: totalGeneralActual, // ✅ Actualizar totalPrice en el estado local
+    totalServicios: totalServiciosActual // ✅ Y también totalServicios si lo usas
+  }));
 
   
   // Actualizar store
   if (!isPrintMode && data.id) {
+    console.log("actualizarStore", {totalGeneralActual, totalServiciosActual})
     actualizarStore(totalGeneralActual, totalServiciosActual);
   }
   
   // Actualizar data padre
   if (!isPrintMode && updateData) {
+
     updateData({
       curtainQuantity: cantidadCortinas,
       totalPrice: totalGeneralActual,
@@ -269,7 +280,7 @@ const handleDecrement = () => {
 
 const handleCantidadChange = (e) => {
   if (isPrintMode) return;
-  const value = parseInt(e.target.value) || 1;
+  const value = Number(e.target.value) || 1;
   if (value > 0) setCantidadCortinas(value);
 };
 
@@ -292,7 +303,7 @@ const handleMultiplicadorChange = (e) => {
     }));
     return;
   }
-  const numericValue = parseFloat(value);
+  const numericValue = Number(value);
   if (numericValue > 0) {
     setFormulaPersonalizada(prev => ({
       ...prev,
@@ -304,7 +315,7 @@ const handleMultiplicadorChange = (e) => {
 
 const handleValorPersonalizadoChange = (e) => {
   if (isPrintMode) return;
-  const value = e.target.value;
+  const value = Number(e.target.value);
   if (value === '') {
     setFormulaPersonalizada(prev => ({
       ...prev,
@@ -312,7 +323,7 @@ const handleValorPersonalizadoChange = (e) => {
     }));
     return;
   }
-  const numericValue = parseFloat(value);
+  const numericValue = Number(value);
   if (numericValue > 0) {
     setFormulaPersonalizada(prev => ({
       ...prev,
@@ -323,7 +334,7 @@ const handleValorPersonalizadoChange = (e) => {
 
 const handlePrecioPersonalizadoChange = (e) => {
   if (isPrintMode) return;
-  const value = e.target.value;
+  const value = Number(e.target.value);
   if (value === '') {
     setFormulaPersonalizada(prev => ({
       ...prev,
@@ -331,7 +342,7 @@ const handlePrecioPersonalizadoChange = (e) => {
     }));
     return;
   }
-  const numericValue = parseFloat(value);
+  const numericValue = Number(value);
   if (numericValue > 0) {
     setFormulaPersonalizada(prev => ({
       ...prev,
@@ -352,7 +363,7 @@ const handleTomaMedidasToggle = () => {
 
 const handleTomaMedidasCantidadChange = (e) => {
   if (isPrintMode) return;
-  const value = parseInt(e.target.value);
+  const value = Number(e.target.value);
   if (value > 0) {
     setTomaMedidas(prev => ({
       ...prev,
@@ -381,7 +392,7 @@ const handleRielesToggle = () => {
 
 const handleRielesCantidadChange = (e) => {
   if (isPrintMode) return;
-  const value = parseInt(e.target.value);
+  const value = Number(e.target.value);
   if (value > 0) {
     setRieles(prev => ({
       ...prev,
@@ -396,10 +407,10 @@ const handleRielesCantidadChange = (e) => {
 const handleRielesMetrosChange = (e) => {
     if (isPrintMode) return;
     
-    const rawValue = e.target.value;
+    const rawValue = Number(e.target.value);
     
     // Si el campo está vacío, establece 0. De lo contrario, parsea el float.
-    const numericValue = rawValue === "" ? 0 : parseFloat(rawValue);
+    const numericValue = rawValue === "" ? 0 : Number(rawValue);
 
     // Permitir 0 o cualquier número positivo
     if (numericValue >= 0 || rawValue === "") {
@@ -422,7 +433,7 @@ const handleInstalacionToggle = () => {
 
 const handleInstalacionCantidadChange = (e) => {
   if (isPrintMode) return;
-  const value = parseInt(e.target.value);
+  const value = Number(e.target.value);
   if (value > 0) {
     setInstalacion(prev => ({
       ...prev,
@@ -484,6 +495,8 @@ const handleInstalacionCantidadChange = (e) => {
     isPrintMode // Dependencias necesarias si se pasan al hook
 ]);
   
+
+
 
   return (
     <div className="space-y-6">
@@ -686,7 +699,7 @@ const handleInstalacionCantidadChange = (e) => {
                           value={formulaPersonalizada.adicionalFijo}
                           onChange={(e) => setFormulaPersonalizada(prev => ({
                             ...prev,
-                            adicionalFijo:parseFloat(e.target.value) || 0
+                            adicionalFijo:Number(e.target.value) || 0
                           }))}
                           className="mt-1"
                         />
@@ -731,7 +744,7 @@ const handleInstalacionCantidadChange = (e) => {
                     ) : (
                         <div>
                         <p><strong>Donde:</strong></p>
-                        <p>• Valor = Ancho × 2 (${(windowWidth * 2).toFixed(2)})</p>
+                        <p>• Valor = Ancho × 2 o ({(windowWidth * 2).toFixed(2)})</p>
                         <p>• Precio por metro = ${PRECIO_POR_METRO.toLocaleString()}</p>
                         <p>• Adicional fijo = ${ADICIONAL_FIJO.toLocaleString()}</p>
                       </div>

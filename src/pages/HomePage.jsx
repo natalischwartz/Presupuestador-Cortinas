@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuoteStore } from "@/store/quoteStore";
 
+
 const HomePage = () => {
   const navigate = useNavigate();
 

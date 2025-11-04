@@ -685,7 +685,7 @@ export const PresupuestoPDF = ({
           {/* Información Importante */}
           <View style={[styles.card, {marginTop: 6}]}>
             <Text style={[styles.sectionTitle, {marginBottom: 5}]}>Información Importante</Text>
-            <Text style={styles.noteText}>• Precios válidos por 30 días</Text>
+            {/* <Text style={styles.noteText}>• Precios válidos por 30 días</Text> */}
             <Text style={styles.noteText}>• Para comenzar el trabajo se requiere seña del 50%</Text>
             <Text style={styles.noteText}>• Tiempo de entrega estimado: 10-20 días hábiles</Text>
             <Text style={styles.noteText}>• Garantía de 1 año en confección</Text>
