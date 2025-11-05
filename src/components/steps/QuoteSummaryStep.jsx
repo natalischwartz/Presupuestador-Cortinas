@@ -189,11 +189,11 @@ const actualizarTodo = () => {
   const totalServiciosActual = calcularCostoTomaMedidas() + calcularCostoRieles() + calcularCostoInstalacion();
   const totalGeneralActual = totalCortinasActual + totalServiciosActual;
   
-  setData(prevData => ({
-    ...prevData,
-    totalPrice: totalGeneralActual, // ✅ Actualizar totalPrice en el estado local
-    totalServicios: totalServiciosActual // ✅ Y también totalServicios si lo usas
-  }));
+  // setData(prevData => ({
+  //   ...prevData,
+  //   totalPrice: totalGeneralActual, // ✅ Actualizar totalPrice en el estado local
+  //   totalServicios: totalServiciosActual // ✅ Y también totalServicios si lo usas
+  // }));
 
   
   // Actualizar store
