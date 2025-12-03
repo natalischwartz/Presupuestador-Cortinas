@@ -12,8 +12,8 @@ export const useQuoteStore = create(
 
       // Precio por metro desde variable de entorno
       PRECIO_POR_METRO: Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000,
-      PRECIO_POR_METRO_ROLLER: Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 25000,
-      ADICIONAL_FIJO: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000,
+      PRECIO_POR_METRO_ROLLER: Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 35000,
+      ADICIONAL_FIJO: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 20000,
 
       addQuote: (newQuote) => set((state) => ({
         quotes: [...state.quotes, { 
@@ -301,8 +301,8 @@ export const useQuoteStore = create(
       // Helper para precio de sistema roller
       getRollerSystemPrice: (systemType) => {
         const systems = {
-          'SYSTEM_38MM': Number(import.meta.env.VITE_ROLLER_SYSTEM_38MM_PRICE) || 33000,
-          'SYSTEM_45MM': Number(import.meta.env.VITE_ROLLER_SYSTEM_45MM_PRICE) || 46400,
+          'SYSTEM_38MM': Number(import.meta.env.VITE_ROLLER_SYSTEM_38MM_PRICE) || 35000,
+          'SYSTEM_45MM': Number(import.meta.env.VITE_ROLLER_SYSTEM_45MM_PRICE) || 50000,
         };
         return systems[systemType] || systems.SYSTEM_45MM;
       },

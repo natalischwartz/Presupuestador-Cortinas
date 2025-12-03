@@ -9,9 +9,9 @@ import { PresupuestoPDF } from "./PresupuestoPDF";
 import { useQuoteStore } from "@/store/quoteStore"; // Importa el store
 
 // Precios base desde variables de entorno
-const PRECIO_POR_METRO_ROLLER = Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 25000;
+const PRECIO_POR_METRO_ROLLER = Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 35000;
 const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000;
-const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO) || 15000;
+const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO) || 20000;
 const BASE_PRICES = {
   CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE),
   CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE),
