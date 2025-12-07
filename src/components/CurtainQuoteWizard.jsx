@@ -32,9 +32,9 @@ export const CurtainQuoteWizard = () => {
   const { 
     addQuote, 
     updateQuote, 
+    currentQuote, 
     setCurrentQuote, 
-    clearCurrentQuote,
-    calculateTotal
+    clearCurrentQuote 
   } = useQuoteStore();
 
   const [currentStep, setCurrentStep] = useState(0); //Valor inicial: 0 (primer paso del array)
@@ -151,24 +151,8 @@ export const CurtainQuoteWizard = () => {
       console.log("EDITANDO ->", data)
       updateQuote(editingQuote.id, data);
     } else {
-      // Para nuevos presupuestos, calcula el total usando el metodo de la store
-      const totalCalculado = calculateTotal({
-        ...data,
-        curtainQuantity: data.curtainQuantity || 1,
-        customWidth: Number(data.customWidth) || 0,
-        customHeight: Number(data.customHeight) || 0,
-        fabricPrice: data.fabricPrice || 0,
-        multiplier: data.multiplier || 2
-      });
-
-      const dataConTotal = {
-        ...data,
-        totalPrice: totalCalculado,
-        curtainQuantity: data.curtainQuantity || 1
-      };
-
-      console.log("AGREGANDO con total calculado ->", dataConTotal)
-      addQuote(dataConTotal);
+      console.log("AGREGANDO ->", data)
+      addQuote(data);
     }
     navigate("/home-page");
   };
