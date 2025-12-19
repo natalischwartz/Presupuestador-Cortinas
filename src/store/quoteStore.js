@@ -15,24 +15,207 @@ export const useQuoteStore = create(
       PRECIO_POR_METRO_ROLLER: Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 35000,
       ADICIONAL_FIJO: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 20000,
 
-      addQuote: (newQuote) => set((state) => ({
-        quotes: [...state.quotes, { 
-          ...newQuote, 
-          id: Date.now().toString(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }]
-      })),
 
-      updateQuote: (id, updatedQuote) => set((state) => ({
-        quotes: state.quotes.map(quote => 
-          quote.id === id ? { 
-            ...quote, 
-            ...updatedQuote, 
+       // NUEVO: Función única para normalizar datos
+      normalizeQuoteData: (quoteData) => {
+        const data = { ...quoteData };
+        
+        // Campos numéricos que siempre deben ser números
+        const numericFields = [
+          'customWidth', 'customHeight', 'curtainQuantity',
+          'cantidadVentanas', 'cantidadVentanasRiel',
+          'cantidadVentanasInstalacion', 'metrosPorVentana',
+          'multiplier', 'formulaValorPersonalizado',
+          'formulaPrecioPersonalizado', 'adicionalFijo',
+          'fabricPrice', 'rollerSystemPrice'
+        ];
+
+        numericFields.forEach(field => {
+          if (data[field] !== undefined && data[field] !== null) {
+            data[field] = Number(data[field]) || 0;
+          }
+        });
+
+        // Valores por defecto
+        data.curtainQuantity = data.curtainQuantity || 1;
+        data.multiplier = data.multiplier || 2;
+        data.formulaPrecioPersonalizado = data.formulaPrecioPersonalizado || get().PRECIO_POR_METRO;
+        data.adicionalFijo = data.adicionalFijo || get().ADICIONAL_FIJO;
+
+        // IMPORTANTE: Solo asignar valores por defecto si NO hay fórmula personalizada activa
+          if (data.formulaPersonalizadaActiva) {
+            // Si hay fórmula personalizada activa, respetar los valores editados
+            data.formulaPrecioPersonalizado = data.formulaPrecioPersonalizado || get().PRECIO_POR_METRO;
+            data.adicionalFijo = data.adicionalFijo || get().ADICIONAL_FIJO;
+            
+            // Solo calcular valor automático si realmente es 0 o no existe
+            // y si el usuario no desactivó la fórmula personalizada
+            if ((!data.formulaValorPersonalizado || data.formulaValorPersonalizado === 0) && 
+                data.formulaPersonalizadaActiva) {
+              // Mantener el cálculo automático como sugerencia
+              data.formulaValorPersonalizado = (data.customWidth || 0) * (data.multiplier || 2);
+            }
+          } else {
+            // Si NO hay fórmula personalizada activa, usar valores por defecto
+            data.formulaPrecioPersonalizado = get().PRECIO_POR_METRO;
+            data.adicionalFijo = get().ADICIONAL_FIJO;
+            
+            // Para fórmula estándar, siempre calcular automáticamente
+            data.formulaValorPersonalizado = (data.customWidth || 0) * (data.multiplier || 2);
+          }
+
+        return data;
+      },
+
+      // NUEVO: Función para cálculos de cortinas (reutilizable)
+      calculateCortina: (quoteData) => {
+        const normalizedData = get().normalizeQuoteData(quoteData);
+        const {
+          curtainType,
+          formulaPersonalizadaActiva,
+          customWidth,
+          customHeight,
+          formulaValorPersonalizado,
+          formulaPrecioPersonalizado,
+          adicionalFijo,
+          curtainQuantity
+        } = normalizedData;
+
+        const ancho = customWidth;
+        const alto = customHeight;
+        const cantidad = curtainQuantity || 1;
+
+        let totalPorCortina = 0;
+        let calculoDetalle = "";
+
+        if (formulaPersonalizadaActiva) {
+          // FÓRMULA PERSONALIZADA
+          const valor = formulaValorPersonalizado;
+          const precio = formulaPrecioPersonalizado;
+          totalPorCortina = valor * precio + adicionalFijo;
+          calculoDetalle = `${valor} × $${precio.toLocaleString()} + $${adicionalFijo.toLocaleString()}`;
+        
+        } else if (curtainType === 'roller') {
+          // LÓGICA ROLLER
+          const sistema = ancho * get().PRECIO_POR_METRO_ROLLER;
+          const tela = ancho * alto * get().PRECIO_POR_METRO_ROLLER;
+          totalPorCortina = (sistema + tela) * 2 + adicionalFijo;
+          calculoDetalle = `((${ancho.toFixed(2)}m × $${get().PRECIO_POR_METRO_ROLLER.toLocaleString()}) + (${ancho.toFixed(2)}m × ${alto.toFixed(2)}m × $${get().PRECIO_POR_METRO_ROLLER.toLocaleString()})) × 2 + $${adicionalFijo.toLocaleString()}`;
+        
+        } else {
+          // FÓRMULA ESTÁNDAR
+          const valor = formulaValorPersonalizado || (ancho * 2);
+          totalPorCortina = valor * get().PRECIO_POR_METRO + adicionalFijo;
+          calculoDetalle = `${valor.toFixed(2)} × $${get().PRECIO_POR_METRO.toLocaleString()} + $${adicionalFijo.toLocaleString()}`;
+        }
+         const totalCortinas = totalPorCortina * cantidad;
+
+
+         return {
+          totalPorCortina,
+          totalCortinas,
+          cantidadCortinas: cantidad,
+          windowWidth: ancho,
+          windowHeight: alto,
+          calculoDetalle
+        };
+      },
+
+      calculateValorPersonalizado: (ancho, multiplicador = 2) => {
+      return (Number(ancho) || 0) * (Number(multiplicador) || 2);
+    },
+
+
+       // NUEVO: Función para cálculos de servicios (reutilizable)
+      calculateServicios: (quoteData) => {
+        const normalizedData = get().normalizeQuoteData(quoteData);
+        const BASE_PRICES = get().getBasePrices();
+        const windowWidth = normalizedData.customWidth || 0;
+
+        // Toma de medidas
+        const costoTomaMedidas = normalizedData.necesitaTM 
+          ? (normalizedData.cantidadVentanas || 1) * 
+            (normalizedData.ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA)
+          : 0;
+
+        // Rieles
+        const metrosPorVentana = normalizedData.metrosPorVentana > 0 
+          ? normalizedData.metrosPorVentana 
+          : windowWidth;
+        const costoRieles = normalizedData.necesitaRiel 
+          ? (normalizedData.cantidadVentanasRiel || 1) * metrosPorVentana * BASE_PRICES.RAIL
+          : 0;
+
+        // Instalación
+        const costoInstalacion = normalizedData.hasInstallation 
+          ? (normalizedData.cantidadVentanasInstalacion || 1) * BASE_PRICES.INSTALLATION
+          : 0;
+
+        const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
+
+        return {
+          tomaMedidas: {
+            activo: normalizedData.necesitaTM || false,
+            cantidadVentanas: normalizedData.cantidadVentanas || 0,
+            ubicacion: normalizedData.ubicacionTM || 'CABA',
+            costo: costoTomaMedidas,
+            calculo: normalizedData.necesitaTM 
+              ? `${normalizedData.cantidadVentanas} ventana(s) × $${(normalizedData.ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA).toLocaleString()}`
+              : ''
+          },
+          rieles: {
+            activo: normalizedData.necesitaRiel || false,
+            cantidadVentanas: normalizedData.cantidadVentanasRiel || 0,
+            metrosPorVentana: metrosPorVentana,
+            costo: costoRieles,
+            calculo: normalizedData.necesitaRiel 
+              ? `${normalizedData.cantidadVentanasRiel} ventana(s) × ${metrosPorVentana.toFixed(2)}m × $${BASE_PRICES.RAIL.toLocaleString()}`
+              : ''
+          },
+          instalacion: {
+            activo: normalizedData.hasInstallation || false,
+            cantidadVentanas: normalizedData.cantidadVentanasInstalacion || 0,
+            costo: costoInstalacion,
+            calculo: normalizedData.hasInstallation 
+              ? `${normalizedData.cantidadVentanasInstalacion} ventana(s) × $${BASE_PRICES.INSTALLATION.toLocaleString()}`
+              : ''
+          },
+          totalServicios
+        };
+      },
+
+
+      addQuote: (newQuote) => set((state) => {
+        const normalizedData = get().normalizeQuoteData(newQuote);
+        const total = get().calculateTotal(normalizedData);
+        
+        return {
+          quotes: [...state.quotes, { 
+            ...normalizedData,
+            totalPrice: total,
+            id: Date.now().toString(),
+            createdAt: new Date(),
             updatedAt: new Date()
-          } : quote
-        )
-      })),
+          }]
+        }
+      }),
+
+      updateQuote: (id, updatedQuote) => set((state) => {
+        const normalizedData = get().normalizeQuoteData(updatedQuote);
+        const total = get().calculateTotal(normalizedData);
+        
+        return {
+          quotes: state.quotes.map(quote => 
+            quote.id === id ? { 
+              ...quote, 
+              ...normalizedData,
+              totalPrice: total,
+              updatedAt: new Date()
+            } : quote
+          )
+        }
+      }),
+
 
       deleteQuote: (id) => set((state) => ({
         quotes: state.quotes.filter(quote => quote.id !== id),
@@ -74,90 +257,33 @@ export const useQuoteStore = create(
         return quotes.find(quote => quote.id === id)
       },
 
-    calculateTotal: (quote) => {
-        if (!quote) return 0;
+     calculateTotal: (quoteData) => {
+        const normalizedData = get().normalizeQuoteData(quoteData);
         
-        const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
-        const PRECIO_POR_METRO_ROLLER = get().PRECIO_POR_METRO_ROLLER; 
-        const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
-        const BASE_PRICES = get().getBasePrices();
+        // Calcular cortinas
+        const { totalCortinas } = get().calculateCortina(normalizedData);
         
-        // Obtener y asegurar que las medidas y cantidades son números
-        const windowWidth = Number(quote.customWidth) || 0;
-        const windowHeight = Number(quote.customHeight) || 0;
-        const cantidadCortinas = Number(quote.curtainQuantity) || 1;
+        // Calcular servicios
+        const { totalServicios } = get().calculateServicios(normalizedData);
         
-        // --- 1. Cálculo de cortinas ---
-        let totalPorCortina = 0;
-        
-        if (quote.formulaPersonalizadaActiva) {
-            // FÓRMULA PERSONALIZADA
-            const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
-            const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-            const adicionalFijo = Number(quote.adicionalFijo) || ADICIONAL_FIJO;
-
-            totalPorCortina = valorPersonalizado * precioPersonalizado + adicionalFijo;
-            // console.log(totalPorCortina);
-        
-        } else if (quote.curtainType === 'roller') {
-            // LÓGICA ESPECÍFICA PARA ROLLER
-            // Fórmula: (sistema + tela) * 2 + ADICIONAL_FIJO
-            const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
-            // Nota: Aquí se asume que la tela es ancho * alto * PRECIO_POR_METRO_ROLLER
-            const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
-            const subtotal = (sistema + tela) * 2; 
-            totalPorCortina = subtotal + ADICIONAL_FIJO;
-            
-        } else {
-            // FÓRMULA ESTÁNDAR (TRADICIONAL, ROMANA, BLACKOUT)
-            // Se usa windowWidth * 2 como valor base (o el valor guardado si existe, aunque no esté activa la fórmula).
-            // Si quieres que la lógica estándar siempre use (windowWidth * 2), usa:
-            const valor = Number(windowWidth * 2); 
-            
-            // Si quieres permitir que el valor personalizado se use si existe, aunque no esté activa la fórmula (como en QuoteSummaryStep):
-            // const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
-            
-            totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
-        }
-
-        const totalCortinas = totalPorCortina * cantidadCortinas;
-        // console.log(totalCortinas)
-        
-        // --- 2. Cálculo de servicios adicionales ---
-        let totalServicios = 0;
-        
-        // Toma de medidas
-        if (quote.necesitaTM) {
-          const cantidadVentanas = Number(quote.cantidadVentanas) || 1;
-          const precioTM = quote.ubicacionTM === 'CABA' 
-            ? BASE_PRICES.MEASUREMENT_CABA 
-            : BASE_PRICES.MEASUREMENT_GBA;
-          totalServicios += cantidadVentanas * precioTM;
-        }
-        
-        // Rieles
-        if (quote.necesitaRiel) {
-          const cantidadVentanas = Number(quote.cantidadVentanasRiel) || 1;
-          // Se usa metrosPorVentana si es positivo, sino windowWidth
-          const metrosPorVentana = (Number(quote.metrosPorVentana) > 0 
-            ? Number(quote.metrosPorVentana) 
-            : windowWidth) || 0; // Asegurarse de que no sea NaN
-          totalServicios += cantidadVentanas * metrosPorVentana * BASE_PRICES.RAIL;
-        }
-        
-        // Instalación
-        if (quote.hasInstallation) {
-          const cantidadVentanas = Number(quote.cantidadVentanasInstalacion) || 1;
-          totalServicios += cantidadVentanas * BASE_PRICES.INSTALLATION;
-        }
-        
-        const totalGeneral = totalCortinas + totalServicios;
-        // console.log(totalGeneral)
-        
-        return totalGeneral;
+        return totalCortinas + totalServicios;
       },
-     
 
+
+       // NUEVO: Función para obtener todos los cálculos de una vez
+      getCompleteCalculation: (quoteData) => {
+        const normalizedData = get().normalizeQuoteData(quoteData);
+        const cortinas = get().calculateCortina(normalizedData);
+        const servicios = get().calculateServicios(normalizedData);
+        const totalGeneral = cortinas.totalCortinas + servicios.totalServicios;
+
+        return {
+          ...cortinas,
+          ...servicios,
+          totalGeneral,
+          quoteData: normalizedData
+        };
+      },
 
       getQuoteTotal: (id) => {
       const { quotes, calculateTotal } = get();
@@ -166,106 +292,17 @@ export const useQuoteStore = create(
       return calculateTotal(quote);
     },
 
-      // NUEVO: Cálculo específico para servicios adicionales
-      calculateServiciosAdicionales: (quote) => {
-        const BASE_PRICES = get().getBasePrices();
-        const windowWidth = Number(quote.customWidth) || 0;
-        
-        // Toma de medidas
-        const costoTomaMedidas = quote.necesitaTM 
-          ? (Number(quote.cantidadVentanas) || 1) * 
-            (quote.ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA)
-          : 0;
 
-        // Rieles
-        const metrosPorVentana = Number(quote.metrosPorVentana) > 0 
-          ? Number(quote.metrosPorVentana) 
-          : windowWidth;
-        const costoRieles = quote.necesitaRiel 
-          ? (Number(quote.cantidadVentanasRiel) || 1) * metrosPorVentana * BASE_PRICES.RAIL
-          : 0;
+      getBasePrices: () => ({
+        CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE) || 5000,
+        CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE) || 7000,
+        RAIL: Number(import.meta.env.VITE_RAIL_PRICE) || 15000,
+        INSTALLATION: Number(import.meta.env.VITE_INSTALLATION_PRICE) || 25000,
+        MEASUREMENT_CABA: Number(import.meta.env.VITE_MEASUREMENT_CABA_PRICE) || 20000,
+        MEASUREMENT_GBA: Number(import.meta.env.VITE_MEASUREMENT_GBA_PRICE) || 30000,
+      }),
 
-        // Instalación
-        const costoInstalacion = quote.hasInstallation 
-          ? (Number(quote.cantidadVentanasInstalacion) || 1) * BASE_PRICES.INSTALLATION
-          : 0;
 
-        return {
-          tomaMedidas: {
-            activo: quote.necesitaTM || false,
-            cantidadVentanas: Number(quote.cantidadVentanas) || 0,
-            ubicacion: quote.ubicacionTM || 'CABA',
-            costo: costoTomaMedidas,
-            calculo: quote.necesitaTM 
-              ? `${Number(quote.cantidadVentanas) || 1} ventana(s) × $${(quote.ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA).toLocaleString()}`
-              : ''
-          },
-          rieles: {
-            activo: quote.necesitaRiel || false,
-            cantidadVentanas: Number(quote.cantidadVentanasRiel) || 0,
-            metrosPorVentana: metrosPorVentana,
-            costo: costoRieles,
-            calculo: quote.necesitaRiel 
-              ? `${Number(quote.cantidadVentanasRiel) || 1} ventana(s) × ${metrosPorVentana.toFixed(2)}m × $${BASE_PRICES.RAIL.toLocaleString()}`
-              : ''
-          },
-          instalacion: {
-            activo: quote.hasInstallation || false,
-            cantidadVentanas: Number(quote.cantidadVentanasInstalacion) || 0,
-            costo: costoInstalacion,
-            calculo: quote.hasInstallation 
-              ? `${Number(quote.cantidadVentanasInstalacion) || 1} ventana(s) × $${BASE_PRICES.INSTALLATION.toLocaleString()}`
-              : ''
-          },
-          totalServicios: costoTomaMedidas + costoRieles + costoInstalacion
-        };
-      },
-
-      // NUEVO: Cálculo específico para cortinas
-      calculateCortinas: (quote) => {
-        const PRECIO_POR_METRO = get().PRECIO_POR_METRO;
-        const PRECIO_POR_METRO_ROLLER = get().PRECIO_POR_METRO_ROLLER;
-        const ADICIONAL_FIJO = get().ADICIONAL_FIJO;
-
-        const windowWidth = Number(quote.customWidth) || 0;
-        const windowHeight = Number(quote.customHeight) || 0;
-        const cantidadCortinas = Number(quote.curtainQuantity) || 1;
-        
-        let totalPorCortina;
-        let calculoDetalle ="";
-
-          if (quote.formulaPersonalizadaActiva) {
-          const valorPersonalizado = Number(quote.formulaValorPersonalizado) || (windowWidth*2);
-          const precioPersonalizado = Number(quote.formulaPrecioPersonalizado) || PRECIO_POR_METRO;
-          totalPorCortina = valorPersonalizado * precioPersonalizado + ADICIONAL_FIJO;
-          calculoDetalle = `valor (${valorPersonalizado}) x $ ${precioPersonalizado.toLocaleString()} + $ ${ADICIONAL_FIJO.toLocaleString()}`;
-        } else if(quote.curtainType === 'roller')  {
-           // LÓGICA ESPECÍFICA PARA ROLLER - AGREGAR ESTA PARTE
-    const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
-    const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
-    totalPorCortina = (sistema + tela) * 2 + ADICIONAL_FIJO;
-    calculoDetalle = `(Sistema (${windowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()}) + Tela (${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()})) × 2 + $${ADICIONAL_FIJO.toLocaleString()}`;
-        }else {
-    // CORTINA TRADICIONAL
-    const valor = Number(quote.formulaValorPersonalizado) || (windowWidth * 2);
-    totalPorCortina = valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
-    calculoDetalle = `Valor (${valor}) × $${PRECIO_POR_METRO.toLocaleString()} + $${ADICIONAL_FIJO.toLocaleString()}`;
-  }
-
-  const totalCortinas = totalPorCortina * cantidadCortinas;
-
-   return {
-    totalPorCortina,
-    totalCortinas,
-    cantidadCortinas,
-    windowWidth,
-    windowHeight,
-    precioPorMetro: PRECIO_POR_METRO,
-    precioPorMetroRoller : PRECIO_POR_METRO_ROLLER,
-    adicionalFijo: ADICIONAL_FIJO,
-    calculoDetalle
-  };
-      },
 
       formatCurrency: (amount) => {
         return new Intl.NumberFormat('es-AR', {
@@ -288,15 +325,6 @@ export const useQuoteStore = create(
         return hasInstallation ? 'Con instalación' : 'Sin instalación'
       },
 
-      // Helper para obtener precios base desde variables de entorno
-      getBasePrices: () => ({
-        CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE) || 5000,
-        CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE) || 7000,
-        RAIL: Number(import.meta.env.VITE_RAIL_PRICE) || 15000,
-        INSTALLATION: Number(import.meta.env.VITE_INSTALLATION_PRICE) || 25000,
-        MEASUREMENT_CABA: Number(import.meta.env.VITE_MEASUREMENT_CABA_PRICE) || 20000,
-        MEASUREMENT_GBA: Number(import.meta.env.VITE_MEASUREMENT_GBA_PRICE) || 30000,
-      }),
 
       // Helper para precio de sistema roller
       getRollerSystemPrice: (systemType) => {

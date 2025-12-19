@@ -25,10 +25,10 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    console.log('📤 Enviando credenciales:', {
-      email: formData.email,
-      password: formData.password
-    });
+    // console.log('📤 Enviando credenciales:', {
+    //   email: formData.email,
+    //   password: formData.password
+    // });
 
     try {
       const result = await login(formData.email, formData.password);

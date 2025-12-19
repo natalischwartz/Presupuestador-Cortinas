@@ -29,14 +29,14 @@ export const CurtainQuoteWizard = () => {
   const location = useLocation();
 
   // Usar el store de Zustand
-  const { 
-    addQuote, 
+const {  addQuote, 
     updateQuote, 
-    currentQuote, 
-    setCurrentQuote, 
+    normalizeQuoteData, 
+    calculateTotal, 
+    PRECIO_POR_METRO,
+    setCurrentQuote,
     clearCurrentQuote,
-    calculateTotal
-  } = useQuoteStore();
+    calculateValorPersonalizado } = useQuoteStore();
 
   const [currentStep, setCurrentStep] = useState(0); //Valor inicial: 0 (primer paso del array)
 
@@ -68,22 +68,52 @@ export const CurtainQuoteWizard = () => {
     necesitaTM: null, //
     ubicationTM: "CABA", //
     necesitaRiel: null, //
-    metrosRiel: 0, //
+    metrosPorVentana: 0, //
     cantidadVentanas: 1,
-    cantidadVentanasRiel: 0,
+    cantidadVentanasRiel: 1,
     rollerSystemType:undefined,
-    rollerSystemPrice: undefined
+    rollerSystemPrice: undefined,
+    // Datos de fórmula personalizada
+    formulaPersonalizadaActiva: false,
+    formulaValorPersonalizado: 0, // metros totales (ancho * multiplicador)
+    formulaPrecioPersonalizado: PRECIO_POR_METRO, // precio por metro
+    cantidadVentanasInstalacion: 1, 
+    curtainQuantity: 1,
+    adicionalFijo: Number(import.meta.env.VITE_ADICIONAL_FIJO) || 20000,
+    costoRieles:0
+
   });
 
-  // Cargar datos de la quote que estamos editando
+  // CORREGIDO: Función para calcular valor personalizado
+  const calcularValorPersonalizadoLocal = () => {
+    const ancho = Number(data.customWidth) || 0;
+    const multiplicador = Number(data.multiplier) || 2;
+    return ancho * multiplicador;
+  };
+
+
+
+ useEffect(() => {
+    if (!data.formulaPersonalizadaActiva && data.customWidth !== undefined) {
+      const nuevoValor = calcularValorPersonalizadoLocal();
+      setData(prev => ({
+        ...prev,
+        formulaValorPersonalizado: nuevoValor
+      }));
+    }
+  }, [data.customWidth, data.multiplier, data.formulaPersonalizadaActiva]);
+
+
   useEffect(() => {
     if (editingQuote) {
-      setData(editingQuote);
-      setCurrentQuote(editingQuote);
+      // Normalizar datos de edición
+      const normalizedData = normalizeQuoteData(editingQuote);
+      setData(normalizedData);
+      setCurrentQuote(normalizedData);
     } else {
       clearCurrentQuote();
     }
-  }, [editingQuote, setCurrentQuote, clearCurrentQuote]);
+  }, [editingQuote, setCurrentQuote, clearCurrentQuote, normalizeQuoteData]);
 
   // Determinar qué pasos mostrar según el tipo de cortina
   const getFilteredSteps = () => {
@@ -147,32 +177,50 @@ export const CurtainQuoteWizard = () => {
     setData((prev) => ({ ...prev, ...dataUser }));
   };
 
-  const handleSaveQuote = () => {
+const handleSaveQuote = () => {
+
+  console.log("🔍 DEBUG handleSaveQuote - data recibido:", {
+    formulaValorPersonalizado: data.formulaValorPersonalizado,
+    formulaPrecioPersonalizado: data.formulaPrecioPersonalizado,
+    formulaPersonalizadaActiva: data.formulaPersonalizadaActiva,
+    adicionalFijo: data.adicionalFijo,
+    curtainQuantity:data.curtainQuantity,
+    necesitaRiel: data.necesitaRiel,
+    cantidadVentanasRiel: data.cantidadVentanasRiel,
+    metrosPorVentana: data.metrosPorVentana,
+    // Verificar cálculos
+    costoRielesCalculado: data.costoRieles || 0,
+    // Ver también si hay diferencia entre data y localData de QuoteSummaryStep
+    source: "data from CurtainQuoteWizard state"
+  });
+    // Normalizar datos usando el store
+    const normalizedData = normalizeQuoteData(data);
+    
+    // Calcular total usando el store
+    const totalCalculado = calculateTotal(normalizedData);
+    
+    const datosFinales = {
+      ...normalizedData,
+      totalPrice: totalCalculado,
+      updatedAt: new Date()
+    };
+
     if (editingQuote) {
-      console.log("EDITANDO ->", data)
-      updateQuote(editingQuote.id, data);
+      updateQuote(editingQuote.id, datosFinales);
     } else {
-      // Para nuevos presupuestos, calcula el total usando el metodo de la store
-      const totalCalculado = calculateTotal({
-        ...data,
-        curtainQuantity: data.curtainQuantity || 1,
-        customWidth: Number(data.customWidth) || 0,
-        customHeight: Number(data.customHeight) || 0,
-        fabricPrice: data.fabricPrice || 0,
-        multiplier: data.multiplier || 2
+      addQuote({
+        ...datosFinales,
+        id: Date.now().toString(),
+        createdAt: new Date()
       });
-
-       const dataConTotal = {
-        ...data,
-        totalPrice: totalCalculado,
-        curtainQuantity: data.curtainQuantity || 1
-      };
-
-      console.log("AGREGANDO con total calculado ->", dataConTotal)
-      addQuote(dataConTotal);
     }
+
     navigate("/home-page");
   };
+
+  const normalizedData = normalizeQuoteData(data);
+console.log("🔍 DEBUG - Objeto normalizedData:", normalizedData);
+
 
   const handleBackToCRUD = () => {
     navigate("/home-page");

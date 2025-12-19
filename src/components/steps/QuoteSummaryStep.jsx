@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -8,493 +8,284 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PresupuestoPDF } from "./PresupuestoPDF";
 import { useQuoteStore } from "@/store/quoteStore"; // Importa el store
 
-// Precios base desde variables de entorno
-const PRECIO_POR_METRO_ROLLER = Number(import.meta.env.VITE_PRECIO_METRO_ROLLER) || 35000;
-const PRECIO_POR_METRO = Number(import.meta.env.VITE_PRECIO_POR_METRO) || 60000;
-const ADICIONAL_FIJO = Number(import.meta.env.VITE_ADICIONAL_FIJO) || 20000;
-const BASE_PRICES = {
-  CONFECTION: Number(import.meta.env.VITE_CONFECTION_PRICE),
-  CONFECTION_EXTRA: Number(import.meta.env.VITE_CONFECTION_EXTRA_PRICE),
-  RAIL: Number(import.meta.env.VITE_RAIL_PRICE),
-  INSTALLATION: Number(import.meta.env.VITE_INSTALLATION_PRICE),
-  MEASUREMENT_CABA: Number(import.meta.env.VITE_MEASUREMENT_CABA_PRICE),
-  MEASUREMENT_GBA: Number(import.meta.env.VITE_MEASUREMENT_GBA_PRICE),
-};
 
 export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
 
     // Usa el store de Zustand
-  const { updateQuote, calculateTotal } = useQuoteStore();
+  const {  updateQuote, 
+    calculateTotal,
+    getCompleteCalculation,
+    normalizeQuoteData,
+    PRECIO_POR_METRO,
+    PRECIO_POR_METRO_ROLLER,
+    ADICIONAL_FIJO,
+    formatCurrency,
+  getBasePrices } = useQuoteStore();
 
-  const [cantidadCortinas, setCantidadCortinas] = useState(
-    isPrintMode ? data.curtainQuantity : data.curtainQuantity || 1
-  );
-  
-  // Estados para servicios manuales
-  const [tomaMedidas, setTomaMedidas] = useState({
-    activo: isPrintMode ? data.necesitaTM : data.necesitaTM || false,
-    cantidadVentanas: isPrintMode ? data.cantidadVentanas : data.cantidadVentanas || 1,
-    ubicacion: isPrintMode ? data.ubicacionTM : data.ubicacionTM || 'CABA'
-  });
+  const BASE_PRICES = getBasePrices();
 
-  const [rieles, setRieles] = useState({
-    activo: isPrintMode ? data.necesitaRiel : data.necesitaRiel || false,
-    cantidadVentanas: isPrintMode ? data.cantidadVentanasRiel : data.cantidadVentanasRiel || 1,
-    metrosPorVentana: isPrintMode ? data.metrosPorVentana : data.metrosPorVentana || 0
-  });
-  //  console.log(data.metrosPorVentana)
-
-  const [instalacion, setInstalacion] = useState({
-    activo: isPrintMode ? data.hasInstallation : data.hasInstallation || false,
-    cantidadVentanas: isPrintMode ? data.cantidadVentanasInstalacion : data.cantidadVentanasInstalacion || 1
-  });
-
-  
-  // Obtener medidas
-  const getWindowHeight = () => {
-    if (data.customHeight) {
-      return Number(data.customHeight);
+  // Estado local simplificado
+  const [localData, setLocalData] = useState(() => {
+    const baseData = { ...data };
+    if (!isPrintMode) {
+      // Normalizar datos iniciales
+      const normalized = normalizeQuoteData(baseData);
+      return normalized;
     }
-    return 0;
-  };
-
-  const getWindowWidth = () => {
-    if (data.customWidth) {
-      return Number(data.customWidth);
-    }
-    return 0;
-  };
-
-  const windowHeight = getWindowHeight();
-  const windowWidth = getWindowWidth();
-  console.log("window width--->", windowWidth)
-
-  // Estado para la fórmula personalizada
-  const [formulaPersonalizada, setFormulaPersonalizada] = useState({
-    activa: data.formulaPersonalizadaActiva || false,
-    valorPersonalizado : Number(data.formulaValorPersonalizado) || (windowWidth*2),
-    multiplicador: Number(data.formulaMultiplicador) || 2,
-    precioPersonalizado: Number(data.formulaPrecioPersonalizado) || PRECIO_POR_METRO,
-    adicionalFijo: Number(data.adicionalFijo) || ADICIONAL_FIJO,
-    editando: false
+    return baseData;
   });
- 
 
-  // Calcular total por cortina - con fórmula personalizada o estándar
-  const calcularTotalPorCortina = () => {
-    if (!windowWidth) return 0;
-    
-    if (formulaPersonalizada.activa) {
-      // Usar fórmula personalizada
-     const valorPersonalizado = Number(formulaPersonalizada.valorPersonalizado) || (windowWidth * 2);
-     return valorPersonalizado * formulaPersonalizada.precioPersonalizado + formulaPersonalizada.adicionalFijo;
-    } 
-    
-     // Lógica específica para Roller
-  if (data.curtainType === 'roller') {
-   //FORMULA ROLLER : sistema + tela + adicional fijo
-   const sistema = windowWidth * PRECIO_POR_METRO_ROLLER;
-   const tela = windowWidth * windowHeight * PRECIO_POR_METRO_ROLLER;
-   
-   return (sistema + tela)*2 + ADICIONAL_FIJO;
-  }else {
-     // FÓRMULA TRADICIONAL: Valor × Precio + Adicional Fijo
-    const valor = Number(formulaPersonalizada.valorPersonalizado) || (windowWidth * 2);
-    return valor * PRECIO_POR_METRO + ADICIONAL_FIJO;
+   // Estado para fórmula personalizada (solo UI)
+  const [formulaEditMode, setFormulaEditMode] = useState(false);
+
+
+   const calcularValorAutomatico = () =>{
+    const ancho = Number(localData.customWidth) || 0;
+    const multiplicador = Number(localData.multiplier) || 2;
+    return ancho * multiplicador;
   }
-  
-  // // Fórmula estándar para otros tipos de cortinas
-  // const store = useQuoteStore.getState();
-  // return (windowWidth * 2 * store.PRECIO_POR_METRO) + store.ADICIONAL_FIJO;
-};
-
-  // Calcular costos de servicios
-  const calcularCostoTomaMedidas = () => {
-    if (!tomaMedidas.activo) return 0;
-    const precioTM = tomaMedidas.ubicacion === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA;
-    return tomaMedidas.cantidadVentanas * precioTM;
-  };
-
-  const calcularCostoRieles = () => {
-    if (!rieles.activo) return 0;
-    const metros = Number(rieles.metrosPorVentana) > 0 ? Number(rieles.metrosPorVentana) : windowWidth;
-    return rieles.cantidadVentanas * metros * BASE_PRICES.RAIL;
-  };
- 
-
-  const calcularCostoInstalacion = () => {
-    if (!instalacion.activo) return 0;
-    return instalacion.cantidadVentanas * BASE_PRICES.INSTALLATION;
-  };
-
-  // Calcular totales
-  const totalPorCortina = calcularTotalPorCortina();
-  const costoTomaMedidas = calcularCostoTomaMedidas();
-  const costoRieles = calcularCostoRieles();
-  const costoInstalacion = calcularCostoInstalacion();
-  const totalCortinas = totalPorCortina * cantidadCortinas;
-  const totalServicios = costoTomaMedidas + costoRieles + costoInstalacion;
-  // console.log("total servicios--->",totalServicios)
- 
-  // console.log(cantidadCortinas)
-
-const totalGeneral = totalCortinas + totalServicios;
-
-   // Función para actualizar el store de Zustand
-const actualizarStore = (totalGeneral, totalServicios) => {
-  if (!isPrintMode && data.id) {
-    const store = useQuoteStore.getState();
-    
-    console.log("totalGeneral", totalGeneral)
-    
-    const datosActualizados = {
-      curtainQuantity: cantidadCortinas,
-      totalPrice: totalGeneral,
-      necesitaTM: tomaMedidas.activo,
-      cantidadVentanas: tomaMedidas.cantidadVentanas,
-      ubicacionTM: tomaMedidas.ubicacion,
-      necesitaRiel: rieles.activo,
-      cantidadVentanasRiel: rieles.cantidadVentanas,
-      metrosPorVentana: rieles.metrosPorVentana,
-      hasInstallation: instalacion.activo,
-      cantidadVentanasInstalacion: instalacion.cantidadVentanas,
-      formulaPersonalizadaActiva: formulaPersonalizada.activa,
-      formulaMultiplicador: formulaPersonalizada.multiplicador,
-      formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
-      formulaValorPersonalizado: formulaPersonalizada.valorPersonalizado,
-      adicionalFijo: formulaPersonalizada.adicionalFijo,
-      customWidth: data.customWidth,
-      customHeight: data.customHeight,
-      curtainType: data.curtainType,
-      totalServicios: totalServicios
-    };
-
-    console.log('🔄 Actualizando store:', datosActualizados);
-    
-    store.updateQuote(data.id, datosActualizados);
-  }
-    console.log("2")
-};
 
 
-const actualizarTodo = () => {
-  // console.log('🔄 Actualizando todo con cantidad:', cantidadCortinas);
+  // Calcular todo usando el store
+  const calculations = getCompleteCalculation(localData);
 
+   const {
+    totalPorCortina,
+    totalCortinas,
+    cantidadCortinas,
+    totalServicios,
+    totalGeneral,
+    tomaMedidas,
+    rieles,
+    instalacion,
+    calculoDetalle,
+    windowWidth,
+    windowHeight
+  } = calculations;
 
-  console.log("actualizarTodoactualizarTodoactualizarTodoactualizarTodo")
+  //debug verificamos cambios en datos 
 
-  // RECALCULAR todos los valores con la cantidad actual
-  const totalPorCortinaActual = calcularTotalPorCortina();
-  const totalCortinasActual = totalPorCortinaActual * cantidadCortinas;
-  const totalServiciosActual = calcularCostoTomaMedidas() + calcularCostoRieles() + calcularCostoInstalacion();
-  const totalGeneralActual = totalCortinasActual + totalServiciosActual;
-  
-  // setData(prevData => ({
-  //   ...prevData,
-  //   totalPrice: totalGeneralActual, // ✅ Actualizar totalPrice en el estado local
-  //   totalServicios: totalServiciosActual // ✅ Y también totalServicios si lo usas
-  // }));
-
-  
-  // Actualizar store
-  if (!isPrintMode && data.id) {
-    console.log("actualizarStore", {totalGeneralActual, totalServiciosActual})
-    actualizarStore(totalGeneralActual, totalServiciosActual);
-  }
-  
-  // Actualizar data padre
-  if (!isPrintMode && updateData) {
-
-    updateData({
-      curtainQuantity: cantidadCortinas,
-      totalPrice: totalGeneralActual,
-      necesitaTM: tomaMedidas.activo,
-      cantidadVentanas: tomaMedidas.cantidadVentanas,
-      ubicacionTM: tomaMedidas.ubicacion,
-      necesitaRiel: rieles.activo,
-      cantidadVentanasRiel: rieles.cantidadVentanas,
-      metrosPorVentana: rieles.metrosPorVentana,
-      hasInstallation: instalacion.activo,
-      cantidadVentanasInstalacion: instalacion.cantidadVentanas,
-      costoTomaMedidas: costoTomaMedidas,
-      costoRieles: costoRieles,
-      costoInstalacion: costoInstalacion,
-      totalServicios: totalServiciosActual,
-      formulaPersonalizadaActiva: formulaPersonalizada.activa,
-      formulaMultiplicador: formulaPersonalizada.multiplicador,
-      formulaPrecioPersonalizado: formulaPersonalizada.precioPersonalizado,
-      formulaValorPersonalizado : formulaPersonalizada.valorPersonalizado,
-      adicionalFijo: formulaPersonalizada.adicionalFijo
+  useEffect(()=>{
+    console.log('localData actualizado:',{
+      formulaValorPersonalizado:localData.formulaValorPersonalizado,
+      formulaPrecioPersonalizado: localData.formulaPrecioPersonalizado,
+      adicionalFijo: localData.adicionalFijo,
+      formulaPersonalizadaActiva:localData.formulaPersonalizadaActiva
     });
+  },[localData]
+)
+
+  // Actualizar store cuando cambian los datos
+  useEffect(() => {
+    if (!isPrintMode && localData.id) {
+      const timer = setTimeout(() => {
+        const normalized = normalizeQuoteData(localData);
+        const total = calculateTotal(normalized);
+        
+        updateQuote(localData.id, {
+          ...normalized,
+          totalPrice: total
+        });
+
+        // Actualizar componente padre si es necesario
+        if (updateData) {
+          updateData(normalized);
+        }
+      }, 300); // Debounce para evitar demasiadas actualizaciones
+
+      return () => clearTimeout(timer);
+    }
+  }, [localData, isPrintMode]);
+
+ 
+
+  const handleValorPersonalizadoChange = (value) => {
+  if (isPrintMode) return;
+  const numValue = Number(value) || 0;
+  
+  // ✅ Actualiza MULTIPLES campos
+  const updates = {
+    formulaValorPersonalizado: numValue,
+    formulaPersonalizadaActiva: true  // ¡ESTO ES LO NUEVO!
+  };
+  
+  setLocalData(prev => ({ ...prev, ...updates }));
+  
+  // También pasar al padre
+  if (updateData) {
+    updateData(updates);
   }
 };
 
-// useEffect(() => {
-//   if (!isPrintMode && data.id) {
-//     actualizarTodo();
-//   }
-// }, [cantidadCortinas]);
-
+const handlePrecioPersonalizadoChange = (value) => {
+  if (isPrintMode) return;
+  const numValue = Number(value) || PRECIO_POR_METRO;
   
-  // Estructura de servicios para el PDF
-  const serviciosAdicionales = {
-    tomaMedidas: {
-      activo: tomaMedidas.activo,
-      cantidadVentanas: tomaMedidas.cantidadVentanas,
-      ubicacion: tomaMedidas.ubicacion,
-      costo: costoTomaMedidas,
-      calculo: tomaMedidas.activo ? 
-        `${tomaMedidas.cantidadVentanas} ventana(s) × $${(tomaMedidas.ubicacion === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA : BASE_PRICES.MEASUREMENT_GBA).toLocaleString()}` :
-        ''
-    },
-    rieles: {
-      activo: rieles.activo,
-      cantidadVentanas: rieles.cantidadVentanas,
-      metrosPorVentana: rieles.metrosPorVentana > 0 ? rieles.metrosPorVentana : windowWidth,
-      costo: costoRieles,
-      calculo: rieles.activo ? 
-        `${rieles.cantidadVentanas} ventana(s) × ${(rieles.metrosPorVentana > 0 ? rieles.metrosPorVentana : windowWidth).toFixed(2)}m × $${BASE_PRICES.RAIL.toLocaleString()}` :
-        ''
-    },
-    instalacion: {
-      activo: instalacion.activo,
-      cantidadVentanas: instalacion.cantidadVentanas,
-      costo: costoInstalacion,
-      calculo: instalacion.activo ? 
-        `${instalacion.cantidadVentanas} ventana(s) × $${BASE_PRICES.INSTALLATION.toLocaleString()}` :
-        ''
-    }
+  // ✅ Actualiza MULTIPLES campos
+  const updates = {
+    formulaPrecioPersonalizado: numValue,
+    formulaPersonalizadaActiva: true  // ¡ESTO ES LO NUEVO!
+  };
+  
+  setLocalData(prev => ({ ...prev, ...updates }));
+  
+  // También pasar al padre
+  if (updateData) {
+    updateData(updates);
+  }
+};
+
+   const handleToggleFormula = () => {
+    if (isPrintMode) return;
+    const nuevoEstado = !localData.formulaPersonalizadaActiva;
+    console.log("cambiando formula a:", nuevoEstado ? "personalizada" :"estandar")
+    setLocalData(prev => ({
+      ...prev,
+      formulaPersonalizadaActiva:nuevoEstado
+    }));
+  };
+
+  // Handlers para servicios
+  const handleToggleService = (service) => {
+    if (isPrintMode) return;
+    const nuevoValor = !localData[service];
+  console.log(`🔄 Toggle ${service}:`, {
+    actual: localData[service],
+    nuevo: nuevoValor
+  });
+  const updatedData = {
+    ...localData,
+    [service]: nuevoValor
+  };
+  
+  setLocalData(updatedData);
+  
+  // ✅ IMPORTANTE: Actualizar al padre
+  if (updateData) {
+    updateData({ [service]: nuevoValor });
+  }
+  };
+
+   const handleServiceQuantityChange = (service, value) => {
+    if (isPrintMode) return;
+    const numValue = Math.max(1,Number(value) || 1);
+    console.log(`🔄 Cambio cantidad ${service}:`, {
+    actual: localData[service],
+    nuevo: numValue
+  });
+   const updatedData = {
+    ...localData,
+    [service]: numValue
+  };
+  
+  setLocalData(updatedData);
+  
+  // ✅ IMPORTANTE: Actualizar al padre
+  if (updateData) {
+    updateData({ [service]: numValue });
+  }
+  };
+
+  const handleUbicacionChange = (ubicacion) => {
+    if (isPrintMode) return;
+    setLocalData(prev => ({
+      ...prev,
+      ubicacionTM: ubicacion
+    }));
+  };
+
+   const handleMetrosChange = (value) => {
+    if (isPrintMode) return;
+    setLocalData(prev => ({
+      ...prev,
+      metrosPorVentana: Number(value) || 0
+    }));
   };
 
 
 // Handlers corregidos para cantidad de cortinas
 const handleIncrement = () => {
   if (isPrintMode) return;
-  setCantidadCortinas(prev => prev + 1);
+  const newQuantity = (localData.curtainQuantity || 1) + 1;
+  
+  setLocalData(prev => ({
+    ...prev,
+    curtainQuantity: newQuantity
+  }));
+  
+  // ✅ CRÍTICO: Actualizar también al padre
+  if (updateData) {
+    updateData({ curtainQuantity: newQuantity });
+  }
 };
 
 const handleDecrement = () => {
   if (isPrintMode) return;
-  setCantidadCortinas(prev => Math.max(1, prev - 1));
+  const newQuantity = Math.max(1, (localData.curtainQuantity || 1) - 1);
+  
+  setLocalData(prev => ({
+    ...prev,
+    curtainQuantity: newQuantity
+  }));
+  
+  // ✅ CRÍTICO: Actualizar también al padre
+  if (updateData) {
+    updateData({ curtainQuantity: newQuantity });
+  }
 };
 
-const handleCantidadChange = (e) => {
-  if (isPrintMode) return;
+const handleCantidadInputChange = (e) =>{
+  if(isPrintMode) return;
   const value = Number(e.target.value) || 1;
-  if (value > 0) setCantidadCortinas(value);
-};
 
-  // Handlers para fórmula personalizada
-  const handleToggleFormulaPersonalizada = () => {
-  if (isPrintMode) return;
-  setFormulaPersonalizada(prev => ({
-    ...prev,
-    activa: !prev.activa
-  }));
-};
-
-const handleMultiplicadorChange = (e) => {
-  if (isPrintMode) return;
-  const value = e.target.value;
-  if (value === '') {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      multiplicador: ''
-    }));
-    return;
-  }
-  const numericValue = Number(value);
-  if (numericValue > 0) {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      multiplicador: numericValue
-    }));
-  }
-};
-
-
-const handleValorPersonalizadoChange = (e) => {
-  if (isPrintMode) return;
-  const value = Number(e.target.value);
-  if (value === '') {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      valorPersonalizado: ''
-    }));
-    return;
-  }
-  const numericValue = Number(value);
-  if (numericValue > 0) {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      valorPersonalizado: numericValue
-    }));
-  }
-};
-
-const handlePrecioPersonalizadoChange = (e) => {
-  if (isPrintMode) return;
-  const value = Number(e.target.value);
-  if (value === '') {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      precioPersonalizado: ''
-    }));
-    return;
-  }
-  const numericValue = Number(value);
-  if (numericValue > 0) {
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      precioPersonalizado: numericValue
-    }));
-  }
-};
-
-
-// Handlers para toma de medidas
-const handleTomaMedidasToggle = () => {
-  if (isPrintMode) return;
-  setTomaMedidas(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-const handleTomaMedidasCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = Number(e.target.value);
-  if (value > 0) {
-    setTomaMedidas(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-const handleTomaMedidasUbicacionChange = (ubicacion) => {
-  if (isPrintMode) return;
-  setTomaMedidas(prev => ({
-    ...prev,
-    ubicacion
-  }));
-};
-
-// Handlers para rieles
-const handleRielesToggle = () => {
-  if (isPrintMode) return;
-  setRieles(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-
-const handleRielesCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = Number(e.target.value);
-  if (value > 0) {
-    setRieles(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-
-// EN QuoteSummaryStep.jsx
-
-const handleRielesMetrosChange = (e) => {
-    if (isPrintMode) return;
-    
-    const rawValue = Number(e.target.value);
-    
-    // Si el campo está vacío, establece 0. De lo contrario, parsea el float.
-    const numericValue = rawValue === "" ? 0 : Number(rawValue);
-
-    // Permitir 0 o cualquier número positivo
-    if (numericValue >= 0 || rawValue === "") {
-        setRieles(prev => ({
-            ...prev,
-            // Guardar 0 si estaba vacío o el valor numérico
-            metrosPorVentana: numericValue
-        })); 
-    }
-};
-
-// Handlers para instalación
-const handleInstalacionToggle = () => {
-  if (isPrintMode) return;
-  setInstalacion(prev => ({
-    ...prev,
-    activo: !prev.activo
-  }));
-};
-
-const handleInstalacionCantidadChange = (e) => {
-  if (isPrintMode) return;
-  const value = Number(e.target.value);
-  if (value > 0) {
-    setInstalacion(prev => ({
-      ...prev,
-      cantidadVentanas: value
-    }));
-  }
-};
-
-
-  const handleEditarFormula = () => {
-    if (isPrintMode) return;
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      editando: true
-    }));
+   // Actualizar estado local
+  const updatedData = {
+    ...localData,
+    curtainQuantity: Math.max(1, value)
   };
+
+   setLocalData(updatedData);
+
+   // ✅ CRÍTICO: Actualizar también al padre
+  if (updateData) {
+    updateData({ curtainQuantity: Math.max(1, value) });
+  }
+
+
+}
+//Handlers para fórmula (modo edicion)
+ const handleEditarFormula = () => {
+    if (isPrintMode) return;
+    setFormulaEditMode(true)
+};
+
 
   const handleGuardarFormula = () => {
     if (isPrintMode) return;
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      editando: false
-    }));
+    setFormulaEditMode(false);
   };
 
   const handleCancelarEdicion = () => {
-    if (isPrintMode) return;
-    setFormulaPersonalizada(prev => ({
-      ...prev,
-      editando: false,
-      multiplicador: data.formulaMultiplicador || 2,
-      precioPersonalizado: data.formulaPrecioPersonalizado || PRECIO_POR_METRO
-    }));
+  if (isPrintMode) return;
+  //restaurar valore0s originales
+  setLocalData(prev =>({
+    ...prev,
+    formulaValorPersonalizado: data.formulaValorPersonalizado  || (windowWidth*2),
+    formulaPrecioPersonalizado: data.formulaPrecioPersonalizado  || PRECIO_POR_METRO,
+    adicionalFijo: data.adicionalFijo  || ADICIONAL_FIJO
+  }) )
     
-  };
+  }; 
 
-  useEffect(() => {
-    // Solo actualiza si no estamos en modo impresión y si hay un ID de cotización
-    if (!isPrintMode && data.id) {
-        // Esta dependencia se activará con cualquier cambio en estos estados
-        actualizarTodo(); 
-    }
-}, [
-    cantidadCortinas,
-    tomaMedidas.activo, 
-    tomaMedidas.cantidadVentanas, 
-    tomaMedidas.ubicacion,
-    rieles.activo,
-    rieles.cantidadVentanas,
-    rieles.metrosPorVentana, // <-- ¡Ahora con el valor de cero guardado, esto funciona!
-    instalacion.activo,
-    instalacion.cantidadVentanas,
-    formulaPersonalizada.activa,
-    formulaPersonalizada.multiplicador,
-    formulaPersonalizada.precioPersonalizado,
-    formulaPersonalizada.valorPersonalizado,
-    formulaPersonalizada.adicionalFijo,
-    data.id, 
-    isPrintMode // Dependencias necesarias si se pasan al hook
-]);
-  
+ 
+
+
+const costoTomaMedidas = tomaMedidas?.costo  || 0;
+const costoRieles = rieles?.costo  || 0;
+const costoInstalacion = instalacion?.costo  || 0;
+
+//obtener el valor a mostrar en el form
+const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcularValorAutomatico();
 
 
 
@@ -554,7 +345,7 @@ const handleInstalacionCantidadChange = (e) => {
                         type="number"
                         min="1"
                         value={cantidadCortinas}
-                        onChange={handleCantidadChange}
+                        onChange={handleCantidadInputChange}
                         className="w-20 text-center"
                       />
                       
@@ -573,7 +364,7 @@ const handleInstalacionCantidadChange = (e) => {
                 <div>
                   <p className="text-sm text-gray-600">Tipo de cortina:</p>
                   <p className="font-medium text-lg capitalize">
-                    {data.curtainType || "tradicional"}
+                    {localData.curtainType || "tradicional"}
                   </p>
                 </div>
               </div>
@@ -594,10 +385,10 @@ const handleInstalacionCantidadChange = (e) => {
                 </div>
               </div>
 
-              {data.selectedFabric && (
+              {localData.selectedFabric && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600">Tela seleccionada:</p>
-                  <p className="font-medium">{data.fabricName}</p>
+                  <p className="font-medium">{localData.fabricName}</p>
                 </div>
               )}
             </div>
@@ -611,22 +402,22 @@ const handleInstalacionCantidadChange = (e) => {
                   <h4 className="font-semibold">Configuración de Fórmula</h4>
                 </div>
                 <Button
-                  variant={formulaPersonalizada.activa ? "default" : "outline"}
+                  variant={localData.formulaPersonalizadaActiva  ? "default" : "outline"}
                   size="sm"
-                  onClick={handleToggleFormulaPersonalizada}
+                  onClick={handleToggleFormula}
                 >
-                  {formulaPersonalizada.activa ? "Personalizada" : "Estándar"}
+                  {localData.formulaPersonalizadaActiva  ? "Personalizada" : "Estándar"}
                 </Button>
               </div>
 
-              {formulaPersonalizada.activa ? (
+              {localData.formulaPersonalizadaActiva  ? (
                 <div className="space-y-3">
                   {/* BOTONES DE EDITAR/GUARDAR */}
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">
                       Fórmula personalizada:
                     </Label>
-                    {!formulaPersonalizada.editando ? (
+                    {!formulaEditMode ? (
                       <Button
                         variant="outline"
                         size="sm"
@@ -659,7 +450,7 @@ const handleInstalacionCantidadChange = (e) => {
                   </div>
 
                   {/* CAMPOS EDITABLES CUANDO ESTÁ EN MODO EDICIÓN */}
-                  {formulaPersonalizada.editando ? (
+                  {formulaEditMode ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="valor-personalizado" className="text-sm font-medium">
@@ -670,9 +461,10 @@ const handleInstalacionCantidadChange = (e) => {
                           type="number"
                           step="0.1"
                           min="0.1"
-                          value={formulaPersonalizada.valorPersonalizado}
-                          onChange={handleValorPersonalizadoChange}
+                          value={mostrarValorPersonalizado}
+                          onChange={(e) => handleValorPersonalizadoChange(e.target.value)}
                           className="mt-1"
+                           onWheel={(e) => e.target.blur()} // Evita scroll cambie valor
                         />
                       </div>
                       <div>
@@ -683,9 +475,10 @@ const handleInstalacionCantidadChange = (e) => {
                           id="precio-personalizado"
                           type="number"
                           min="1"
-                          value={formulaPersonalizada.precioPersonalizado}
-                          onChange={handlePrecioPersonalizadoChange}
+                          value={localData.formulaPrecioPersonalizado}
+                          onChange={(e) => handlePrecioPersonalizadoChange(e.target.value)}
                           className="mt-1"
+                           onWheel={(e) => e.target.blur()}
                         />
                       </div>
                        <div>
@@ -696,11 +489,11 @@ const handleInstalacionCantidadChange = (e) => {
                           id="adicional-fijo"
                           type="number"
                           min="1"
-                          value={formulaPersonalizada.adicionalFijo}
-                          onChange={(e) => setFormulaPersonalizada(prev => ({
-                            ...prev,
-                            adicionalFijo:Number(e.target.value) || 0
-                          }))}
+                          value={localData.adicionalFijo}
+                          onChange={(e) => setLocalData(prev => ({
+                        ...prev,
+                        adicionalFijo: Number(e.target.value) || ADICIONAL_FIJO
+                      }))}
                           className="mt-1"
                         />
                       </div>
@@ -710,9 +503,9 @@ const handleInstalacionCantidadChange = (e) => {
                     <div className="text-sm text-purple-700">
                       <p>Fórmula actual: <strong>valor x precio + adicional fijo</strong></p>
                       <p className="text-xs mt-1">
-                        <strong>Valor:</strong>{formulaPersonalizada.valorPersonalizado} |
-                        <strong>Pecio</strong>${formulaPersonalizada.precioPersonalizado.toLocaleString()} |
-                        <strong>Adicional</strong> ${formulaPersonalizada.adicionalFijo.toLocaleString()}
+                        <strong>Valor:</strong>{localData.formulaValorPersonalizado?.toFixed(2) || calcularValorAutomatico().toFixed(2)}|
+                        <strong>Pecio</strong>{formatCurrency(localData.formulaPrecioPersonalizado)} |
+                        <strong>Adicional</strong> {formatCurrency(localData.adicionalFijo)}
                       </p>
                     </div>
                   )}
@@ -720,33 +513,33 @@ const handleInstalacionCantidadChange = (e) => {
               ) : (
                 // VISUALIZACIÓN CUANDO NO ESTÁ ACTIVA LA FÓRMULA PERSONALIZADA
                 <div className="text-sm text-purple-700">
-                  <p>Usando fórmula {data.curtainType === 'roller' ? 'Roller' : 'tradicional'}:</p>
+                  <p>Usando fórmula {localData.curtainType === 'roller' ? 'Roller' : 'tradicional'}:</p>
                   <p className="font-bold mt-1">
-                    {data.curtainType === 'roller' ? (
+                    {localData.curtainType === 'roller' ? (
                       <span>
-                        (Ancho × ${PRECIO_POR_METRO_ROLLER.toLocaleString()} + Ancho × Alto × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}) *2 + ${ADICIONAL_FIJO.toLocaleString()}
+                        (Ancho × {formatCurrency(PRECIO_POR_METRO_ROLLER)} + Ancho × Alto × {formatCurrency(PRECIO_POR_METRO_ROLLER)}) *2 + {formatCurrency(ADICIONAL_FIJO)}
                       </span>
                     ) : (
                       <span>
-                        Valor x ${PRECIO_POR_METRO.toLocaleString()} + ${ADICIONAL_FIJO.toLocaleString()}
+                        Valor x {formatCurrency(PRECIO_POR_METRO)} + {formatCurrency(ADICIONAL_FIJO)}
                       </span>
                     )}
                   </p>
                   <div className="text-xs mt-2 text-purple-600">
-                    {data.curtainType === 'roller' ? (
+                    {localData.curtainType === 'roller' ? (
                       <div>
                         <p><strong>Donde:</strong></p>
-                        <p>• Sistema = Ancho × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}</p>
-                        <p>• Tela = Ancho × Alto × ${PRECIO_POR_METRO_ROLLER.toLocaleString()}</p>
-                        <p>• (Sistema + Tela) × 2 + Adicional fijo = $ {ADICIONAL_FIJO.toLocaleString()}</p>
+                        <p>• Sistema = Ancho × {formatCurrency(PRECIO_POR_METRO_ROLLER)}</p>
+                        <p>• Tela = Ancho × Alto × {formatCurrency(PRECIO_POR_METRO_ROLLER)}</p>
+                        <p>• (Sistema + Tela) × 2 + Adicional fijo = {formatCurrency(ADICIONAL_FIJO)}</p>
 
                       </div>
                     ) : (
                         <div>
                         <p><strong>Donde:</strong></p>
                         <p>• Valor = Ancho × 2 o ({(windowWidth * 2).toFixed(2)})</p>
-                        <p>• Precio por metro = ${PRECIO_POR_METRO.toLocaleString()}</p>
-                        <p>• Adicional fijo = ${ADICIONAL_FIJO.toLocaleString()}</p>
+                        <p>• Precio por metro = {formatCurrency(PRECIO_POR_METRO)}</p>
+                        <p>• Adicional fijo = {formatCurrency(ADICIONAL_FIJO)}</p>
                       </div>
                     )}
                   </div>
@@ -766,30 +559,30 @@ const handleInstalacionCantidadChange = (e) => {
                   </div>
                   {!isPrintMode && (
                     <Button
-                      variant={tomaMedidas.activo ? "default" : "outline"}
+                      variant={localData.necesitaTM ? "default" : "outline"}
                       size="sm"
-                      onClick={handleTomaMedidasToggle}
+                      onClick={() => handleToggleService('necesitaTM')}
                     >
-                      {tomaMedidas.activo ? "Activado" : "Activar"}
+                       {localData.necesitaTM ? "Activado" : "Activar"}
                     </Button>
                   )}
                 </div>
 
-                {tomaMedidas.activo && (
+                {localData.necesitaTM && (
                   <div className="space-y-3 mt-3">
                     <div>
                       <Label htmlFor="tm-cantidad" className="text-sm font-medium">
                         Cantidad de ventanas:
                       </Label>
                       {isPrintMode ? (
-                        <p className="font-medium">{tomaMedidas.cantidadVentanas}</p>
+                        <p className="font-medium">{localData.cantidadVentanas}</p>
                       ) : (
                         <Input
                           id="tm-cantidad"
                           type="number"
                           min="1"
-                          value={tomaMedidas.cantidadVentanas}
-                          onChange={handleTomaMedidasCantidadChange}
+                          value={localData.cantidadVentanas || 1}
+                          onChange={(e) => handleServiceQuantityChange('cantidadVentanas', e.target.value)}
                           className="mt-1"
                         />
                       )}
@@ -800,26 +593,26 @@ const handleInstalacionCantidadChange = (e) => {
                         Ubicación:
                       </Label>
                       {isPrintMode ? (
-                        <p className="font-medium">{tomaMedidas.ubicacion}</p>
+                        <p className="font-medium">{localData.ubicacionTM}</p>
                       ) : (
                         <div className="flex gap-4">
                           <label className="flex items-center">
                             <input
                               type="radio"
-                              checked={tomaMedidas.ubicacion === 'CABA'}
-                              onChange={() => handleTomaMedidasUbicacionChange('CABA')}
+                              checked={localData.ubicacionTM === 'CABA'}
+                              onChange={() => handleUbicacionChange('CABA')}
                               className="mr-2"
                             />
-                            CABA (${BASE_PRICES.MEASUREMENT_CABA.toLocaleString()})
+                            CABA ({formatCurrency(BASE_PRICES.MEASUREMENT_CABA)})
                           </label>
                           <label className="flex items-center">
                             <input
                               type="radio"
-                              checked={tomaMedidas.ubicacion === 'GBA'}
-                              onChange={() => handleTomaMedidasUbicacionChange('GBA')}
+                              checked={localData.ubicacionTM === 'GBA'}
+                              onChange={() => handleUbicacionChange('GBA')}
                               className="mr-2"
                             />
-                            GBA (${BASE_PRICES.MEASUREMENT_GBA.toLocaleString()})
+                            GBA ({formatCurrency(BASE_PRICES.MEASUREMENT_GBA)})
                           </label>
                         </div>
                       )}
@@ -827,8 +620,10 @@ const handleInstalacionCantidadChange = (e) => {
 
                     <div className="text-sm text-blue-700">
                       Costo: {tomaMedidas.cantidadVentanas} ventana(s) × 
-                      ${tomaMedidas.ubicacion === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA.toLocaleString() : BASE_PRICES.MEASUREMENT_GBA.toLocaleString()} = 
-                      <span className="font-bold"> ${costoTomaMedidas.toLocaleString()}</span>
+                      {formatCurrency(localData.ubicacionTM === 'CABA' ? BASE_PRICES.MEASUREMENT_CABA:
+                        BASE_PRICES.MEASUREMENT_GBA
+                      )} = 
+                      <span className="font-bold"> {formatCurrency(costoTomaMedidas)}</span>
                     </div>
                   </div>
                 )}
@@ -843,30 +638,30 @@ const handleInstalacionCantidadChange = (e) => {
                   </div>
                   {!isPrintMode && (
                     <Button
-                      variant={rieles.activo ? "default" : "outline"}
+                      variant={localData.necesitaRiel ? "default" : "outline"}
                       size="sm"
-                      onClick={handleRielesToggle}
+                      onClick={()=> handleToggleService('necesitaRiel')}
                     >
-                      {rieles.activo ? "Activado" : "Activar"}
+                      {localData.necesitaRiel ? "Activado" : "Activar"}
                     </Button>
                   )}
                 </div>
 
-                {rieles.activo && (
+                {localData.necesitaRiel && (
                   <div className="space-y-3 mt-3">
                     <div>
                       <Label htmlFor="rieles-cantidad" className="text-sm font-medium">
                         Cantidad de ventanas:
                       </Label>
                       {isPrintMode ? (
-                        <p className="font-medium">{rieles.cantidadVentanas}</p>
+                        <p className="font-medium">{localData.cantidadVentanasRiel}</p>
                       ) : (
                         <Input
                           id="rieles-cantidad"
                           type="number"
                           min="1"
-                          value={rieles.cantidadVentanas}
-                          onChange={handleRielesCantidadChange}
+                          value={localData.cantidadVentanasRiel  || 1}
+                          onChange={(e)=> handleServiceQuantityChange('cantidadVentanasRiel', e.target.value)}
                           className="mt-1"
                         />
                       )}
@@ -877,15 +672,15 @@ const handleInstalacionCantidadChange = (e) => {
                         Metros por ventana:
                       </Label>
                       {isPrintMode ? (
-                        <p className="font-medium">{rieles.metrosPorVentana || windowWidth.toFixed(2)} m</p>
+                        <p className="font-medium">{localData.metrosPorVentana || windowWidth.toFixed(2)} m</p>
                       ) : (
                         <Input
                           id="rieles-metros"
                           type="number"
                           step="0.1"
                           min="0"
-                          value={rieles.metrosPorVentana}
-                          onChange={handleRielesMetrosChange}
+                          value={localData.metrosPorVentana  || ''}
+                          onChange={(e)=>handleMetrosChange(e.target.value)}
                           className="mt-1"
                           placeholder={`Ancho actual: ${windowWidth.toFixed(2)}m`}
                         />
@@ -893,9 +688,9 @@ const handleInstalacionCantidadChange = (e) => {
                     </div>
 
                     <div className="text-sm text-green-700">
-                      Costo: {rieles.cantidadVentanas} ventana(s) × {rieles.metrosPorVentana || windowWidth.toFixed(2)}m × 
-                      ${BASE_PRICES.RAIL.toLocaleString()} = 
-                      <span className="font-bold"> ${costoRieles.toLocaleString()}</span>
+                      Costo: {localData.cantidadVentanasRiel  || 1} ventana(s) × {localData.metrosPorVentana || windowWidth.toFixed(2)}m × 
+                      {formatCurrency(BASE_PRICES.RAIL)} = 
+                      <span className="font-bold"> {formatCurrency(costoRieles)}</span>
                     </div>
                   </div>
                 )}
@@ -910,39 +705,39 @@ const handleInstalacionCantidadChange = (e) => {
                   </div>
                   {!isPrintMode && (
                     <Button
-                      variant={instalacion.activo ? "default" : "outline"}
+                      variant={localData.hasInstallation ? "default" : "outline"}
                       size="sm"
-                      onClick={handleInstalacionToggle}
+                      onClick={()=> handleToggleService('hasInstallation')}
                     >
-                      {instalacion.activo ? "Activado" : "Activar"}
+                      {localData.hasInstallation ? "Activado" : "Activar"}
                     </Button>
                   )}
                 </div>
 
-                {instalacion.activo && (
+                {localData.hasInstallation && (
                   <div className="space-y-3 mt-3">
                     <div>
                       <Label htmlFor="instalacion-cantidad" className="text-sm font-medium">
                         Cantidad de ventanas:
                       </Label>
                       {isPrintMode ? (
-                        <p className="font-medium">{instalacion.cantidadVentanas}</p>
+                        <p className="font-medium">{localData.cantidadVentanasInstalacion}</p>
                       ) : (
                         <Input
                           id="instalacion-cantidad"
                           type="number"
                           min="1"
-                          value={instalacion.cantidadVentanas}
-                          onChange={handleInstalacionCantidadChange}
+                          value={localData.cantidadVentanasInstalacion  || 1}
+                          onChange={(e)=> handleServiceQuantityChange('cantidadVentanasInstalacion', e.target.value)}
                           className="mt-1"
                         />
                       )}
                     </div>
 
                     <div className="text-sm text-orange-700">
-                      Costo: {instalacion.cantidadVentanas} ventana(s) × 
-                      ${BASE_PRICES.INSTALLATION.toLocaleString()} = 
-                      <span className="font-bold"> ${costoInstalacion.toLocaleString()}</span>
+                      Costo: {localData.cantidadVentanasInstalacion  || 1} ventana(s) × 
+                      {formatCurrency(BASE_PRICES.INSTALLATION)} = 
+                      <span className="font-bold"> {formatCurrency(costoInstalacion)}</span>
                     </div>
                   </div>
                 )}
@@ -960,18 +755,18 @@ const handleInstalacionCantidadChange = (e) => {
                       <div className="flex justify-between items-center text-sm">
       <span className="text-gray-600">Fórmula:</span>
       <span className="font-medium">
-        {formulaPersonalizada.activa 
-            ? `Valor (${formulaPersonalizada.valorPersonalizado}) × $${formulaPersonalizada.precioPersonalizado.toLocaleString()} + $${formulaPersonalizada.adicionalFijo.toLocaleString()}`
-            : data.curtainType === 'roller'
-              ? `(${windowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()} + ${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER.toLocaleString()}) × 2 + $${ADICIONAL_FIJO.toLocaleString()}` // ← AGREGAR × 2
-              : `Valor (${(formulaPersonalizada.valorPersonalizado || (windowWidth * 2)).toFixed(2)}) × $${PRECIO_POR_METRO.toLocaleString()} + $${ADICIONAL_FIJO.toLocaleString()}`
+        {localData.formulaPersonalizadaActiva
+            ? `Valor (${(localData.formulaValorPersonalizado  || calcularValorAutomatico()).toFixed(2)}) × ${formatCurrency(localData.formulaPrecioPersonalizado)} + ${formatCurrency(localData.adicionalFijo)}`
+            : localData.curtainType === 'roller'
+              ? `(${windowWidth.toFixed(2)}m × ${formatCurrency(PRECIO_POR_METRO_ROLLER)} + ${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × ${formatCurrency(PRECIO_POR_METRO_ROLLER)}) × 2 + ${formatCurrency(ADICIONAL_FIJO)}` 
+              : `Valor (${(windowWidth*2).toFixed(2)}) × ${formatCurrency(PRECIO_POR_METRO)} + ${formatCurrency(ADICIONAL_FIJO)}`
           }
       </span>
     </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total por cortina:</span>
                     <span className="font-medium">
-                      ${totalPorCortina.toLocaleString()}
+                     {cantidadCortinas} cortina(s) × {formatCurrency(totalPorCortina)}
                     </span>
                   </div>
                 </div>
@@ -981,10 +776,10 @@ const handleInstalacionCantidadChange = (e) => {
                   <p className="text-sm font-medium text-gray-700">Cálculo general:</p>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">
-                      {cantidadCortinas} cortina{cantidadCortinas > 1 ? 's' : ''} × ${totalPorCortina.toLocaleString()}
+                      {cantidadCortinas} cortina{cantidadCortinas > 1 ? 's' : ''} × {formatCurrency(totalPorCortina)}
                     </span>
                     <span className="font-medium">
-                      = ${totalCortinas.toLocaleString()}
+                      = {formatCurrency(totalCortinas)}
                     </span>
                   </div>
 
@@ -996,27 +791,27 @@ const handleInstalacionCantidadChange = (e) => {
                         {costoTomaMedidas > 0 && (
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-600">Toma de medidas:</span>
-                            <span className="font-medium">+ ${costoTomaMedidas.toLocaleString()}</span>
+                            <span className="font-medium">+ {formatCurrency(costoTomaMedidas)}</span>
                           </div>
                         )}
 
                         {costoRieles > 0 && (
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-600">Rieles:</span>
-                            <span className="font-medium">+ ${costoRieles.toLocaleString()}</span>
+                            <span className="font-medium">+ {formatCurrency(costoRieles)}</span>
                           </div>
                         )}
 
                         {costoInstalacion > 0 && (
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-600">Instalación:</span>
-                            <span className="font-medium">+ ${costoInstalacion.toLocaleString()}</span>
+                            <span className="font-medium">+ {formatCurrency(costoInstalacion)}</span>
                           </div>
                         )}
                         
                         <div className="flex justify-between items-center text-sm font-bold mt-2">
                           <span>Total servicios:</span>
-                          <span>+ ${totalServicios.toLocaleString()}</span>
+                          <span>+ {formatCurrency(totalServicios)}</span>
                         </div>
                       </div>
                     </>
@@ -1026,7 +821,7 @@ const handleInstalacionCantidadChange = (e) => {
                     <div className="flex justify-between items-center text-lg font-bold">
                       <span>Total general:</span>
                       <span className="text-primary text-xl">
-                        ${totalGeneral.toLocaleString()}
+                        {formatCurrency(totalGeneral)}
                       </span>
                     </div>
                   </div>
@@ -1045,22 +840,17 @@ const handleInstalacionCantidadChange = (e) => {
             <p className="text-sm opacity-90 mb-4">
               Total final:{" "}
               <span className="text-2xl font-bold">
-                ${totalGeneral.toLocaleString()}
+                {formatCurrency(totalGeneral)}
               </span>
             </p>
 
             <PDFDownloadLink
               document={
                 <PresupuestoPDF 
-                  data={data} 
-                  total={totalGeneral}
-                  totalPorCortina={totalPorCortina}
-                  totalServicios={totalServicios}
-                  serviciosAdicionales={serviciosAdicionales}
-                  precioPorMetro={formulaPersonalizada.activa ? formulaPersonalizada.precioPersonalizado : PRECIO_POR_METRO}
-                  adicionalFijo={ADICIONAL_FIJO} // ← Nueva prop
-                  formulaPersonalizada={formulaPersonalizada}
-                  // Agregar estas props para consistencia
+                  data={localData} 
+                  calculations = {calculations}
+                  precioPorMetro={localData.formulaPersonalizadaActiva ? localData.formulaPrecioPersonalizado : PRECIO_POR_METRO}
+                  adicionalFijo={localData.adicionalFijo}
                   cantidadCortinas={cantidadCortinas}
                   windowWidth={windowWidth}
                   windowHeight={windowHeight}
