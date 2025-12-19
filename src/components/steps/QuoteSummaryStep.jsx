@@ -459,6 +459,7 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         <Input
                           id="valor-personalizado"
                           type="number"
+                          inputMode="decimal"
                           step="0.1"
                           min="0.1"
                           value={mostrarValorPersonalizado}
@@ -474,6 +475,7 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         <Input
                           id="precio-personalizado"
                           type="number"
+                          inputMode="numeric"
                           min="1"
                           value={localData.formulaPrecioPersonalizado}
                           onChange={(e) => handlePrecioPersonalizadoChange(e.target.value)}
@@ -488,6 +490,7 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         <Input
                           id="adicional-fijo"
                           type="number"
+                          inputMode="numeric"
                           min="1"
                           value={localData.adicionalFijo}
                           onChange={(e) => setLocalData(prev => ({
