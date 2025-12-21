@@ -99,39 +99,43 @@ export const QuoteSummaryStep = ({ data, updateData, isPrintMode = false }) => {
 
  
 
-  const handleValorPersonalizadoChange = (value) => {
+const handleValorPersonalizadoChange = (value) => {
   if (isPrintMode) return;
-  const numValue = Number(value) || 0;
   
-  // ✅ Actualiza MULTIPLES campos
-  const updates = {
-    formulaValorPersonalizado: numValue,
-    formulaPersonalizadaActiva: true  // ¡ESTO ES LO NUEVO!
-  };
+  // Guarda como string (permite vacío)
+  setLocalData(prev => ({
+    ...prev,
+    formulaValorPersonalizado: value,
+    formulaPersonalizadaActiva: true
+  }));
   
-  setLocalData(prev => ({ ...prev, ...updates }));
-  
-  // También pasar al padre
+  // Solo envía número al padre cuando sea válido
   if (updateData) {
-    updateData(updates);
+    const numValue = parseFloat(value) || calcularValorAutomatico();
+    updateData({
+      formulaValorPersonalizado: numValue,
+      formulaPersonalizadaActiva: true
+    });
   }
 };
 
 const handlePrecioPersonalizadoChange = (value) => {
   if (isPrintMode) return;
-  const numValue = Number(value) || PRECIO_POR_METRO;
   
-  // ✅ Actualiza MULTIPLES campos
-  const updates = {
-    formulaPrecioPersonalizado: numValue,
-    formulaPersonalizadaActiva: true  // ¡ESTO ES LO NUEVO!
-  };
+  // ✅ CAMBIO: Guarda como STRING (no número)
+  setLocalData(prev => ({
+    ...prev,
+    formulaPrecioPersonalizado: value,  // Guarda string
+    formulaPersonalizadaActiva: true
+  }));
   
-  setLocalData(prev => ({ ...prev, ...updates }));
-  
-  // También pasar al padre
+  // Solo envía número al padre
   if (updateData) {
-    updateData(updates);
+    const numValue = parseFloat(value) || PRECIO_POR_METRO;
+    updateData({
+      formulaPrecioPersonalizado: numValue,
+      formulaPersonalizadaActiva: true
+    });
   }
 };
 
@@ -166,25 +170,34 @@ const handlePrecioPersonalizadoChange = (value) => {
   }
   };
 
-   const handleServiceQuantityChange = (service, value) => {
-    if (isPrintMode) return;
-    const numValue = Math.max(1,Number(value) || 1);
-    console.log(`🔄 Cambio cantidad ${service}:`, {
-    actual: localData[service],
-    nuevo: numValue
-  });
-   const updatedData = {
-    ...localData,
-    [service]: numValue
-  };
+  const handleServiceQuantityChange = (service, value) => {
+  if (isPrintMode) return;
   
-  setLocalData(updatedData);
-  
-  // ✅ IMPORTANTE: Actualizar al padre
-  if (updateData) {
-    updateData({ [service]: numValue });
+  // ✅ Permite string vacío temporalmente
+  if (value === '') {
+    const updatedData = {
+      ...localData,
+      [service]: ''
+    };
+    setLocalData(updatedData);
+    
+    if (updateData) {
+      updateData({ [service]: '' });
+    }
+  } else {
+    const numValue = Math.max(1, Number(value) || 1);
+    const updatedData = {
+      ...localData,
+      [service]: numValue
+    };
+    
+    setLocalData(updatedData);
+    
+    if (updateData) {
+      updateData({ [service]: numValue });
+    }
   }
-  };
+};
 
   const handleUbicacionChange = (ubicacion) => {
     if (isPrintMode) return;
@@ -194,13 +207,29 @@ const handlePrecioPersonalizadoChange = (value) => {
     }));
   };
 
-   const handleMetrosChange = (value) => {
-    if (isPrintMode) return;
-    setLocalData(prev => ({
-      ...prev,
-      metrosPorVentana: Number(value) || 0
-    }));
-  };
+const handleMetrosChange = (value) => {
+  if (isPrintMode) return;
+  
+  // Permitir números, puntos y comas
+  // Solo reemplazar coma por punto para el cálculo, pero mantener el texto original
+  const valorConPunto = value.replace(',', '.');
+  
+  // Guardar el texto original en el estado local (para mostrar)
+  setLocalData(prev => ({
+    ...prev,
+    metrosPorVentana: value  // Guardar el texto original con comas/puntos
+  }));
+  
+  // Para el padre, enviar el valor numérico o string vacío
+  if (updateData) {
+    if (valorConPunto === '' || valorConPunto === '.') {
+      updateData({ metrosPorVentana: '' });
+    } else {
+      const numValue = parseFloat(valorConPunto);
+      updateData({ metrosPorVentana: isNaN(numValue) ? '' : numValue });
+    }
+  }
+};
 
 
 // Handlers corregidos para cantidad de cortinas
@@ -458,14 +487,12 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         </Label>
                         <Input
                           id="valor-personalizado"
-                          type="number"
+                          type="text"
                           inputMode="decimal"
-                          step="0.1"
-                          min="0.1"
-                          value={mostrarValorPersonalizado}
+                          value={localData.formulaValorPersonalizado || ""}
                           onChange={(e) => handleValorPersonalizadoChange(e.target.value)}
                           className="mt-1"
-                           onWheel={(e) => e.target.blur()} // Evita scroll cambie valor
+                          placeholder={calcularValorAutomatico().toFixed(2)} 
                         />
                       </div>
                       <div>
@@ -474,13 +501,11 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         </Label>
                         <Input
                           id="precio-personalizado"
-                          type="number"
+                          type="text"
                           inputMode="numeric"
-                          min="1"
-                          value={localData.formulaPrecioPersonalizado}
+                          value={localData.formulaPrecioPersonalizado || ""}
                           onChange={(e) => handlePrecioPersonalizadoChange(e.target.value)}
                           className="mt-1"
-                           onWheel={(e) => e.target.blur()}
                         />
                       </div>
                        <div>
@@ -489,15 +514,15 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                         </Label>
                         <Input
                           id="adicional-fijo"
-                          type="number"
+                          type="text"
                           inputMode="numeric"
-                          min="1"
-                          value={localData.adicionalFijo}
+                          value={localData.adicionalFijo || ""}
                           onChange={(e) => setLocalData(prev => ({
                         ...prev,
-                        adicionalFijo: Number(e.target.value) || ADICIONAL_FIJO
+                        adicionalFijo:(e.target.value) || ADICIONAL_FIJO
                       }))}
                           className="mt-1"
+                          placeholder={ADICIONAL_FIJO.toString()}
                         />
                       </div>
                     </div>
@@ -506,7 +531,7 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                     <div className="text-sm text-purple-700">
                       <p>Fórmula actual: <strong>valor x precio + adicional fijo</strong></p>
                       <p className="text-xs mt-1">
-                        <strong>Valor:</strong>{localData.formulaValorPersonalizado?.toFixed(2) || calcularValorAutomatico().toFixed(2)}|
+                        <strong>Valor:</strong>{(+(localData.formulaValorPersonalizado) || calcularValorAutomatico()).toFixed(2)}|
                         <strong>Pecio</strong>{formatCurrency(localData.formulaPrecioPersonalizado)} |
                         <strong>Adicional</strong> {formatCurrency(localData.adicionalFijo)}
                       </p>
@@ -661,11 +686,12 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                       ) : (
                         <Input
                           id="rieles-cantidad"
-                          type="number"
-                          min="1"
-                          value={localData.cantidadVentanasRiel  || 1}
+                          type="text"
+                          inputMode="numeric" 
+                          value={localData.cantidadVentanasRiel  || ""}
                           onChange={(e)=> handleServiceQuantityChange('cantidadVentanasRiel', e.target.value)}
                           className="mt-1"
+                          placeholder="1"
                         />
                       )}
                     </div>
@@ -679,9 +705,8 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                       ) : (
                         <Input
                           id="rieles-metros"
-                          type="number"
-                          step="0.1"
-                          min="0"
+                          type="text"
+                          inputMode="decimal" 
                           value={localData.metrosPorVentana  || ''}
                           onChange={(e)=>handleMetrosChange(e.target.value)}
                           className="mt-1"
@@ -728,11 +753,12 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
                       ) : (
                         <Input
                           id="instalacion-cantidad"
-                          type="number"
-                          min="1"
-                          value={localData.cantidadVentanasInstalacion  || 1}
+                          type="text"
+                          inputMode="numeric" 
+                          value={localData.cantidadVentanasInstalacion  || ""}
                           onChange={(e)=> handleServiceQuantityChange('cantidadVentanasInstalacion', e.target.value)}
                           className="mt-1"
+                          placeholder="1"
                         />
                       )}
                     </div>
@@ -759,7 +785,7 @@ const mostrarValorPersonalizado = localData.formulaValorPersonalizado || calcula
       <span className="text-gray-600">Fórmula:</span>
       <span className="font-medium">
         {localData.formulaPersonalizadaActiva
-            ? `Valor (${(localData.formulaValorPersonalizado  || calcularValorAutomatico()).toFixed(2)}) × ${formatCurrency(localData.formulaPrecioPersonalizado)} + ${formatCurrency(localData.adicionalFijo)}`
+             ? `Valor (${(+(localData.formulaValorPersonalizado) || calcularValorAutomatico()).toFixed(2)}) × ${formatCurrency(localData.formulaPrecioPersonalizado)} + ${formatCurrency(localData.adicionalFijo)}`
             : localData.curtainType === 'roller'
               ? `(${windowWidth.toFixed(2)}m × ${formatCurrency(PRECIO_POR_METRO_ROLLER)} + ${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × ${formatCurrency(PRECIO_POR_METRO_ROLLER)}) × 2 + ${formatCurrency(ADICIONAL_FIJO)}` 
               : `Valor (${(windowWidth*2).toFixed(2)}) × ${formatCurrency(PRECIO_POR_METRO)} + ${formatCurrency(ADICIONAL_FIJO)}`

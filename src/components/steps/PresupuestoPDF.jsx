@@ -1,6 +1,12 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
+// esta función DESPUÉS de los imports y ANTES del componente
+const safeToFixed = (value, fallback = 0) => {
+  if (value == null) return fallback.toFixed(2);
+  const num = Number(value);
+  return (isNaN(num) ? fallback : num).toFixed(2);
+};
 
 const VENDEDOR_EMAIL = "schwartznatali@gmail.com"; 
 const VENDEDOR_TELEFONO = "+54 9 11 6162-2602";
@@ -307,7 +313,8 @@ function formatMeasurement(value) {
 }
 
 
-export const PresupuestoPDF = ({ 
+export const PresupuestoPDF = ({
+  
    data,
   calculations,
   cantidadCortinas,
@@ -332,8 +339,26 @@ export const PresupuestoPDF = ({
     calculoDetalle
   } = calculations;
 
+   // ✅ 3. CREA safeData AQUÍ (después de extraer calculations, antes de usarlos)
+  const safeData = {
+    ...data,
+    formulaValorPersonalizado: Number(data?.formulaValorPersonalizado) || (windowWidth * 2),
+    formulaPrecioPersonalizado: Number(data?.formulaPrecioPersonalizado) || PRECIO_POR_METRO,
+    adicionalFijo: Number(data?.adicionalFijo) || ADICIONAL_FIJO
+  };
+
+
+    const safeWindowWidth = Number(windowWidth) || 0;
+  const safeWindowHeight = Number(windowHeight) || 0;
+
+  const costoTomaMedidas = tomaMedidas?.costo || 0;
+  const costoRieles = rieles?.costo || 0;
+  const costoInstalacion = instalacion?.costo || 0;
+
+
   // Extraer información del cliente
-  const customerInfo = data.customerInfo || {};
+//  Extrae información del cliente de safeData
+  const customerInfo = safeData.customerInfo || {};
   
 
   return (
@@ -375,8 +400,8 @@ export const PresupuestoPDF = ({
                   {cantidadCortinas}
                 </Text>
                 <Text style={styles.tableCell}>
-                  {data.curtainType ? 
-                    data.curtainType.charAt(0).toUpperCase() + data.curtainType.slice(1) : 
+                  {safeData.curtainType ? 
+                  safeData.curtainType.charAt(0).toUpperCase() + safeData.curtainType.slice(1) : 
                     "Tradicional"
                   }
                 </Text>
@@ -384,7 +409,7 @@ export const PresupuestoPDF = ({
                   {formatMeasurement(windowWidth)}m x {formatMeasurement(windowHeight)}m
                 </Text>
                 <Text style={styles.tableCell}>
-                  {data.fabricName || 'No seleccionada'}
+                  {safeData.fabricName || 'No seleccionada'}
                 </Text>
                 <Text style={styles.tableCellBold}>
                   ${formatNumber(totalCortinas)}
@@ -394,11 +419,11 @@ export const PresupuestoPDF = ({
               {/* Fórmula utilizada */}
               <View style={[styles.tableRow, { backgroundColor: '#f9f9f9' }]}>
                 <Text style={[styles.tableCell, { fontSize: 9, textAlign: 'left', flex: 5 }]}>
-                  Fórmula: {data.formulaPersonalizadaActiva
-                    ? `Valor (${(data.formulaValorPersonalizado || (windowWidth * 2)).toFixed(2)}) × $${formatNumber(data.formulaPrecioPersonalizado || PRECIO_POR_METRO)} + $${formatNumber(data.adicionalFijo || ADICIONAL_FIJO)}`
-                    : data.curtainType === 'roller'
-                      ? `(${windowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER} + ${windowWidth.toFixed(2)}m × ${windowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER}) × 2 + $${ADICIONAL_FIJO}`
-                      : `Valor (${(windowWidth * 2).toFixed(2)}) × $${PRECIO_POR_METRO} + $${ADICIONAL_FIJO}`
+                  Fórmula: {safeData.formulaPersonalizadaActiva
+                   ? `Valor (${safeToFixed(safeData.formulaValorPersonalizado, windowWidth * 2)}) × $${formatNumber(safeData.formulaPrecioPersonalizado || PRECIO_POR_METRO)} + $${formatNumber(safeData.adicionalFijo || ADICIONAL_FIJO)}`
+                    : safeData.curtainType === 'roller'
+                      ? `(${safeWindowWidth.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER} + ${safeWindowWidth.toFixed(2)}m × ${safeWindowHeight.toFixed(2)}m × $${PRECIO_POR_METRO_ROLLER}) × 2 + $${ADICIONAL_FIJO}`
+                      : `Valor (${(safeWindowWidth * 2).toFixed(2)}) × $${PRECIO_POR_METRO} + $${ADICIONAL_FIJO}`
                   }
                 </Text>
               </View>
@@ -418,7 +443,7 @@ export const PresupuestoPDF = ({
                   <View style={styles.calculationRow}>
                     <Text style={styles.calculationDetail}>
                       • Toma de Medidas: {tomaMedidas.cantidadVentanas || 1} ventana(s) × 
-                      ${formatNumber(data.ubicacionTM === 'CABA' ? 2000 : 3000)}/{data.ubicacionTM || 'CABA'}
+                      ${formatNumber(safeData.ubicacionTM === 'CABA' ? 2000 : 3000)}/{safeData.ubicacionTM || 'CABA'}
                     </Text>
                     <Text style={styles.calculationDetail}>
                       ${formatNumber(costoTomaMedidas)}
@@ -429,8 +454,8 @@ export const PresupuestoPDF = ({
                 {costoRieles > 0 && (
                   <View style={styles.calculationRow}>
                     <Text style={styles.calculationDetail}>
-                      • Rieles: {data.cantidadVentanasRiel || 1} ventana(s) × 
-                      {data.metrosPorVentana || windowWidth.toFixed(2)}m × ${formatNumber(1000)}
+                      • Rieles: {safeData.cantidadVentanasRiel || 1} ventana(s) × 
+                      {safeData.metrosPorVentana || safeWindowWidth.toFixed(2)}m × ${formatNumber(1000)}
                     </Text>
                     <Text style={styles.calculationDetail}>
                       ${formatNumber(costoRieles)}
@@ -441,7 +466,7 @@ export const PresupuestoPDF = ({
                 {costoInstalacion > 0 && (
                   <View style={styles.calculationRow}>
                     <Text style={styles.calculationDetail}>
-                      • Instalación: {data.cantidadVentanasInstalacion || 1} ventana(s) × ${formatNumber(3000)}
+                      • Instalación: {safeData.cantidadVentanasInstalacion || 1} ventana(s) × ${formatNumber(3000)}
                     </Text>
                     <Text style={styles.calculationDetail}>
                       ${formatNumber(costoInstalacion)}

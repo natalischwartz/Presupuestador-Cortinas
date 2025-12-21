@@ -50,10 +50,15 @@ export const useQuoteStore = create(
             
             // Solo calcular valor automático si realmente es 0 o no existe
             // y si el usuario no desactivó la fórmula personalizada
-            if ((!data.formulaValorPersonalizado || data.formulaValorPersonalizado === 0) && 
-                data.formulaPersonalizadaActiva) {
-              // Mantener el cálculo automático como sugerencia
+            if (data.formulaPersonalizadaActiva) {
+               // NO sobrescribir si es string vacío (permite borrado temporal)
+              const valorActual = data.formulaValorPersonalizado;
+              const esValorVacio = valorActual === '' || valorActual === null || valorActual === undefined;
+              const esCero = Number(valorActual) === 0;
+  
+            if (esValorVacio || esCero) {
               data.formulaValorPersonalizado = (data.customWidth || 0) * (data.multiplier || 2);
+            }
             }
           } else {
             // Si NO hay fórmula personalizada activa, usar valores por defecto
@@ -81,8 +86,8 @@ export const useQuoteStore = create(
           curtainQuantity
         } = normalizedData;
 
-        const ancho = customWidth;
-        const alto = customHeight;
+        const ancho = Number(customWidth) || 0;
+        const alto = Number(customHeight) || 0;
         const cantidad = curtainQuantity || 1;
 
         let totalPorCortina = 0;
@@ -130,7 +135,7 @@ export const useQuoteStore = create(
       calculateServicios: (quoteData) => {
         const normalizedData = get().normalizeQuoteData(quoteData);
         const BASE_PRICES = get().getBasePrices();
-        const windowWidth = normalizedData.customWidth || 0;
+        const windowWidth = Number(normalizedData.customWidth) || 0;
 
         // Toma de medidas
         const costoTomaMedidas = normalizedData.necesitaTM 
