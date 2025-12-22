@@ -208,6 +208,9 @@ export const useQuoteStore = create(
       updateQuote: (id, updatedQuote) => set((state) => {
         const normalizedData = get().normalizeQuoteData(updatedQuote);
         const total = get().calculateTotal(normalizedData);
+
+         // Obtener todos los cálculos completos
+  const calculations = get().getCompleteCalculation(normalizedData);
         
         return {
           quotes: state.quotes.map(quote => 
@@ -215,6 +218,7 @@ export const useQuoteStore = create(
               ...quote, 
               ...normalizedData,
               totalPrice: total,
+               calculations: calculations, 
               updatedAt: new Date()
             } : quote
           )

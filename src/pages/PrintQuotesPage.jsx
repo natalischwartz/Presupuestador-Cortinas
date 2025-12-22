@@ -5,11 +5,13 @@ import { ArrowLeft, Download, Printer } from "lucide-react";
 import { QuoteSummaryStep } from "@/components/steps/QuoteSummaryStep";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PresupuestoPDF } from "@/components/steps/PresupuestoPDF";
+import { useQuoteStore } from "@/store/quoteStore";
 
 const PrintQuotesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const quotes = location.state?.quotes || [];
+  const {getCompleteCalculation,calculateCortina,calculateServicios} = useQuoteStore();
 
   const handleBack = () => {
     navigate(-1);
@@ -34,6 +36,54 @@ const PrintQuotesPage = () => {
       </div>
     );
   }
+
+  // Preparar datos para el PDF
+  const preparePDFData = () => {
+    console.log("preprando datos para PDF con", quotes.length,"quotes")
+    const data = quotes.map(quote=>({
+      ...quote,
+      customWidth:quote.customWidth,
+      customHeight:quote.customHeight,
+      curtainQuantity:quote.curtainQuantity || 1,
+      curtainType:quote.curtainType,
+      formulaPersonalizadaActiva:quote.formulaPersonalizadaActiva,
+      formulaValorPersonalizado:quote.formulaValorPersonalizado,
+      formulaPrecioPersonalizado:quote.formulaPrecioPersonalizado,
+      adicionalFijo:quote.adicionalFijo,
+      necesitaTM:quote.necesitaTM,
+      cantidadVentanas:quote.cantidadVentanas,
+      ubicacionTM:quote.ubicacionTM,
+      ncesesitaRiel:quote.ncesesitaRiel,
+      cantidadVentanasRiel:quote.cantidadVentanasRiel,
+      metrosPorVentana:quote.metrosPorVentana,
+      hasInstallation:quote.hasInstallation,
+      cantidadVentanasInstalacion:quote.cantidadVentanasInstalacion,
+      customerInfo:quote.customerInfo,
+      selectedFabric:quote.selectedFabric,
+      fabricName:quote.fabricName
+
+    }))
+
+    const calculations = quotes.map(quote =>{
+      try {
+        const calc =getCompleteCalculation(quote)
+        return calc
+      } catch (error) {
+        console.error("error calculando quote")
+        
+      }
+    })
+
+    return{
+      data,
+      calculations,
+      multiple:quotes.length >1
+    }
+
+
+  };
+
+  const pdfData = preparePDFData();
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -63,26 +113,31 @@ const PrintQuotesPage = () => {
               <Printer className="h-4 w-4" />
               Imprimir
             </Button>
+            
+            {/* PDF para múltiples quotes */}
             <PDFDownloadLink
-              document={<PresupuestoPDF data={quotes} multiple />}
-              fileName={`presupuestos-cortinas-${Date.now()}.pdf`}
+              document={<PresupuestoPDF {...preparePDFData()} />}
+              fileName={`presupuesto-${Date.now()}.pdf`}
             >
               {({ loading }) => (
                 <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
+                  variant="default"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
                   disabled={loading}
                 >
                   <Download className="h-4 w-4" />
-                  {loading ? "Generando..." : "PDF"}
+                  {loading ? "Generando..." : "Descargar PDF"}
                 </Button>
               )}
             </PDFDownloadLink>
           </div>
         </div>
+        
         <div className="space-y-6">
-          {quotes.map((quote, index) => (
-            <Card key={quote.id } className="shadow-elegant print:shadow-none print:border-0">
+          {quotes.map((quote, index) => {
+            const calculations=getCompleteCalculation(quote);
+            return(
+               <Card key={quote.id} className="shadow-elegant print:shadow-none print:border-0">
               <CardHeader className="bg-gradient-warm print:bg-white">
                 <CardTitle className="flex items-center justify-between">
                   <span>Presupuesto #{index + 1}</span>
@@ -99,8 +154,10 @@ const PrintQuotesPage = () => {
                 />
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
+        
         {quotes.length > 1 && (
           <Card className="mt-6 bg-primary/5">
             <CardContent className="p-6">
@@ -112,12 +169,9 @@ const PrintQuotesPage = () => {
                     currency: 'ARS'
                   }).format(
                     quotes.reduce((total, quote) => {
-                      const basePrice = quote.fabricPrice || 0;
-                      const multiplier = quote.multiplier || 2;
-                      const width = quote.customWidth || 140;
-                      const height = quote.customHeight || 220;
-                      return total + (basePrice * multiplier * (width / 100) * (height / 100));
-                    }, 0)
+                      const calculations = getCompleteCalculation(quote);
+                      return total + (calculations?.totalGeneral ||0);
+                    },0)
                   )}
                 </p>
               </div>
