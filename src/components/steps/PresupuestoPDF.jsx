@@ -1,6 +1,6 @@
 // PresupuestoPDF.jsx - Versión Corregida para Múltiples Presupuestos
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
 // Constantes y utilidades (se mantienen igual)
 const VENDEDOR_EMAIL = "schwartznatali@gmail.com";
@@ -411,9 +411,10 @@ return (
       <Page size="A4" style={styles.page}>
         <View>
           {/* Header */}
-          {/* <Image 
+          <Image 
             style={styles.logo}
-          /> */}
+            src="/Imagenes/estilo-cortina2.jpg"
+          />
           <Text style={styles.subtitle}>{obtenerFechaFormateada()}</Text>
           <Text style={styles.header}>
             Presupuesto
