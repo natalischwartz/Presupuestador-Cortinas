@@ -514,7 +514,7 @@ export const PresupuestoPDF = ({
 
               {/* Filas */}
               {presupuestosCalculados.map((presupuesto, index) => (
-                <View key={index} style={styles.tableRow}>
+                <View key={index} wrap={false} style={styles.tableRow}>
                   {/* 1. Cantidad */}
                   <Text style={[styles.tableCell, { flex: 0.4 }]}>
                     {presupuesto.cortinas.cantidadCortinas}

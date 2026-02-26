@@ -10,42 +10,42 @@ const railStyles = [
     name: "Cabezal recto",
     multiplier: 2,
     description: "Estilo clásico y minimalista",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077256/cabezal-recto-boutMelody_bkmepc.jpg" }
   },
   {
     id: "pinch-1",
     name: "Pellizco 1",
     multiplier: 1.5,
     description: "Pliegue simple y elegante",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077257/pellizco-de-1_gmyuof.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772118602/pellizco-de-1.jpg" }
   },
   {
     id: "pinch-2",
     name: "Pellizco 2",
     multiplier: 2,
     description: "Pliegue doble tradicional",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077256/pellizco-2_ncvtat.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772118603/pellizco-de-2.png" }
   },
   {
     id: "pinch-3",
     name: "Pellizco 3",
     multiplier: 3,
     description: "Pliegue triple sofisticado",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772118603/pellizco-de-3.png" }
   },
   {
     id: "flat-pleat",
     name: "Tabla chata",
     multiplier: 2,
     description: "Pliegues planos uniformes",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077259/tabla-chata_niqgpx.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772118603/tabla-chata.png" }
   },
   {
     id: "inverted-pleat",
     name: "Tabla encontrada",
     multiplier: 2,
     description: "Pliegues invertidos",
-    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772118602/tabla-encontrada.jpg" }
   },
 ];
 
