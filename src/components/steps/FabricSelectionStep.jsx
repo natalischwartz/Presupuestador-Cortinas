@@ -44,7 +44,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       width: "2.50m",
       price: Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
       image: {
-        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772078642/roller-blackout_calsro.jpg"
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772120374/replit/roller-blackout_calsro.png"
       }
     }
   ];
