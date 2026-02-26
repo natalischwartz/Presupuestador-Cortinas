@@ -61,9 +61,11 @@ const {  addQuote,
     selectedFabric: "", //
     fabricWidth: 0, //
     fabricName: "", //
-    fabricPrice: 0, //
+    fabricPrice: 0,
+    fabricImage:"", //
     headerStyle: "", //
-    headerType: undefined, //
+    headerType: undefined,
+    headerImage:"", //
     multiplier: 2, //
     necesitaTM: null, //
     ubicationTM: "CABA", //

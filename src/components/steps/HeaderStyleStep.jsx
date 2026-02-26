@@ -10,36 +10,42 @@ const railStyles = [
     name: "Cabezal recto",
     multiplier: 2,
     description: "Estilo clásico y minimalista",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
   },
   {
     id: "pinch-1",
     name: "Pellizco 1",
     multiplier: 1.5,
     description: "Pliegue simple y elegante",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077257/pellizco-de-1_gmyuof.jpg" }
   },
   {
     id: "pinch-2",
     name: "Pellizco 2",
     multiplier: 2,
     description: "Pliegue doble tradicional",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077256/pellizco-2_ncvtat.jpg" }
   },
   {
     id: "pinch-3",
     name: "Pellizco 3",
     multiplier: 3,
     description: "Pliegue triple sofisticado",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
   },
   {
     id: "flat-pleat",
     name: "Tabla chata",
     multiplier: 2,
     description: "Pliegues planos uniformes",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077259/tabla-chata_niqgpx.jpg" }
   },
   {
     id: "inverted-pleat",
     name: "Tabla encontrada",
     multiplier: 2,
     description: "Pliegues invertidos",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
   },
 ];
 
@@ -49,18 +55,21 @@ const rodStyles = [
     name: "Presillas normales",
     multiplier: 1.2,
     description: "Presillas visibles tradicionales",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077187/presilla-normal-barral_pkuxrr.jpg" }
   },
   {
     id: "rod-pocket",
     name: "Jareta para barral",
     multiplier: 2,
     description: "Bolsillo para pasar el barral",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077186/jareta-para-barral_gey121.jpg" }
   },
   {
     id: "hidden-tabs",
     name: "Presillas ocultas",
     multiplier: 2,
     description: "Presillas discretas en la parte trasera",
+    image: { secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077129/presilla-oculta_vqa8wd.jpg" }
   },
 ];
 
@@ -76,8 +85,10 @@ export const HeaderStyleStep = ({ data, updateData }) => {
     if (style) {
       updateData({
         headerStyle: style.id,
+        headerName: style.name,
         multiplier: style.multiplier,
         headerType: railStyles.some(s => s.id === styleId) ? 'rail' : 'rod',
+        headerImage: style.image?.secure_url || ""
       });
     }
   };

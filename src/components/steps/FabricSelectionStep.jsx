@@ -34,7 +34,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       width: "2.50m",
       price: Number(import.meta.env.VITE_ROLLER_SCREEN_PRICE),
       image: {
-        secure_url: "/Imagenes/colores-roller-sunscreen.jpg"
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772077129/roller-screen_nb4wcs.jpg"
       }
     },
     {
@@ -44,7 +44,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       width: "2.50m",
       price: Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
       image: {
-        secure_url: "Imagenes/colores-blackout-roller.jpg"
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772078642/roller-blackout_calsro.jpg"
       }
     }
   ];
@@ -60,11 +60,17 @@ export const FabricSelectionStep = ({ data, updateData }) => {
   }, [selectedRollerSystem, data.curtainType, updateData]);
 
   const handleFabricSelect = (fabric) => {
+
+    const imageUrl = fabric.image?.secure_url || ""
+
+    console.log("imagen para enviar", imageUrl);
+
     updateData({
       selectedFabric: fabric._id,
       fabricWidth: fabric.width,
       fabricName: fabric.name,
-      fabricPrice: fabric.price
+      fabricPrice: fabric.price,
+      fabricImage: imageUrl
     });
   };
 

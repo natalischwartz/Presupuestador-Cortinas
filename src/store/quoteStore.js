@@ -36,6 +36,12 @@ export const useQuoteStore = create(
           }
         });
 
+        // NUEVO: Asegurarnos de que las imágenes y nombres se mantengan
+        data.fabricName = quoteData.fabricName || '';
+        data.fabricImage = quoteData.fabricImage || ''; // URL de la tela
+        data.headerName = quoteData.headerName || '';
+        data.headerImage = quoteData.headerImage || ''; // URL del cabezal
+
         // Valores por defecto
         data.curtainQuantity = data.curtainQuantity || 1;
         data.multiplier = data.multiplier || 2;

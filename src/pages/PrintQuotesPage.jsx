@@ -60,7 +60,10 @@ const PrintQuotesPage = () => {
       cantidadVentanasInstalacion:quote.cantidadVentanasInstalacion,
       customerInfo:quote.customerInfo,
       selectedFabric:quote.selectedFabric,
-      fabricName:quote.fabricName
+      fabricName:quote.fabricName,
+      fabricImage:quote.fabricImage,
+      headerImage:quote.headerImage
+
 
     }))
 
