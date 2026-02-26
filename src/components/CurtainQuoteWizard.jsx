@@ -118,19 +118,24 @@ const {  addQuote,
   }, [editingQuote, setCurrentQuote, clearCurrentQuote, normalizeQuoteData]);
 
   // Determinar qué pasos mostrar según el tipo de cortina
-  const getFilteredSteps = () => {
-    if (data.curtainType === "roller" ||"roller dual" ||"bandas verticales") {
-      // Para roller: Tipo -> Medidas -> Tela -> Presupuesto
-      return STEPS.filter(
-        (step) =>
-          step.id === "curtain-type" ||
-          step.id === "measurements" ||
-          step.id === "fabric" ||
-          step.id === "summary"
-      );
-    }
-    return STEPS;
-  };
+ const getFilteredSteps = () => {
+  // Creamos la lista de tipos que NO llevan cabezal (familia Roller/Sistemas)
+  const isSystemCurtain = ["roller", "roller dual", "bandas verticales"].includes(data.curtainType);
+
+  if (isSystemCurtain) {
+    // Para roller, dual y verticales: Saltamos el paso de "header" (cabezal)
+    return STEPS.filter(
+      (step) =>
+        step.id === "curtain-type" ||
+        step.id === "measurements" ||
+        step.id === "fabric" ||
+        step.id === "summary"
+    );
+  }
+
+  // Para las Tradicionales (y cualquier otro), devolvemos todos los pasos (incluyendo "header")
+  return STEPS;
+};
 
   const filteredSteps = getFilteredSteps();
 

@@ -126,7 +126,9 @@ export const FabricSelectionStep = ({ data, updateData }) => {
   }, [data.curtainType]);
 
   // Determinar qué telas mostrar
-  const fabricsToShow = data.curtainType === 'roller' || "roller dual" || "bandas verticales" ? rollerFabrics : products;
+ const isRollerFamily = ['roller', 'roller dual', 'bandas verticales'].includes(data.curtainType);
+
+ const fabricsToShow = isRollerFamily ? rollerFabrics : products;
 
   if (cargando && data.curtainType !== 'roller') {
     return (
