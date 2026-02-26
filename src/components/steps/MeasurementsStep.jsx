@@ -8,7 +8,7 @@ import { Ruler, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 export const MeasurementsStep = ({ data, updateData }) => {
   //determinar si se selecciono cortinas roller
 
-  const isRoller = data.curtainType === "roller";
+  const isRoller = data.curtainType === "roller" || "roller dual" || "bandas verticales";
 
   // Opciones de altura según el tipo de cortina
 

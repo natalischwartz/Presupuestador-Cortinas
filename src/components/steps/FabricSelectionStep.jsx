@@ -46,12 +46,45 @@ export const FabricSelectionStep = ({ data, updateData }) => {
       image: {
         secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772136046/roller-blackout-2_drfh2m.jpg"
       }
-    }
+    },
+     {
+      _id: "roller-dual",
+      name: "Roller Dúo",
+      description: "Sistema noche y día con doble tela",
+      width: "2.50m",
+      price: Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
+      image: {
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772140893/sistema-dual_q9n5zs.jpg"
+      }
+    },
+    {
+      _id: "bandas-verticales-blackout",
+      name: "Bandas verticales black out premium",
+      description: "Control de luz preciso para ventanales",
+      width: "2.50m",
+      price: Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
+      image: {
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772137253/bandas-verticales_axtqtr.jpg"
+      }
+    },
+     {
+      _id: "bandas-verticales",
+      name: "Bandas verticales screen",
+      description: "Control de luz preciso para ventanales",
+      width: "2.50m",
+      price: Number(import.meta.env.VITE_ROLLER_BLACKOUT_PRICE),
+      image: {
+        secure_url: "https://res.cloudinary.com/dzkzrdbfu/image/upload/v1772141585/bandas-verticales-screen_qkshw2.jpg"
+      }
+    },
+    
   ];
+
+
 
   // Actualizar datos cuando cambia el sistema roller
   useEffect(() => {
-    if (data.curtainType === "roller") {
+    if (data.curtainType === "roller" || "roller dual" || "bandas verticales") {
       updateData({
         rollerSystemType: selectedRollerSystem,
         rollerSystemPrice: ROLLER_SYSTEMS[selectedRollerSystem].price
@@ -93,7 +126,7 @@ export const FabricSelectionStep = ({ data, updateData }) => {
   }, [data.curtainType]);
 
   // Determinar qué telas mostrar
-  const fabricsToShow = data.curtainType === 'roller' ? rollerFabrics : products;
+  const fabricsToShow = data.curtainType === 'roller' || "roller dual" || "bandas verticales" ? rollerFabrics : products;
 
   if (cargando && data.curtainType !== 'roller') {
     return (

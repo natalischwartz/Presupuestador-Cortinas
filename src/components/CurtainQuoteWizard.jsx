@@ -119,7 +119,7 @@ const {  addQuote,
 
   // Determinar qué pasos mostrar según el tipo de cortina
   const getFilteredSteps = () => {
-    if (data.curtainType === "roller") {
+    if (data.curtainType === "roller" ||"roller dual" ||"bandas verticales") {
       // Para roller: Tipo -> Medidas -> Tela -> Presupuesto
       return STEPS.filter(
         (step) =>

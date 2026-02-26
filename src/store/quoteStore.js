@@ -330,8 +330,8 @@ export const useQuoteStore = create(
         const types = {
           'traditional': 'Tradicional',
           'roller': 'Roller',
-          'roman': 'Romana',
-          'blackout': 'Blackout'
+          'roller dual': 'Roller Duo',
+          'bandas verticales': 'Bandas verticales'
         }
         return types[type] || type
       },

@@ -19,13 +19,19 @@ export const CurtainTypeStep = ({ data, updateData }) => {
       icon: RotateCcw,
       available: true,
     },
-    // ver doble cortinado
     {
-      id: "doble-cortinado",
-      title: "Doble cortinado",
-      description: "Eleccion 2 telas para doble cortinado",
+      id: "roller dual",
+      title: "Roller duo",
+      description: "Sistema noche y día con doble tela",
       icon: RotateCcw,
-      available: false, //no disponible
+      available: true,
+    },
+    {
+      id: "bandas verticales",
+      title: "Bandas Verticales",
+      description: "Control de luz preciso para ventanales",
+      icon: RotateCcw,
+      available: true,
     },
   ];
 
@@ -98,7 +104,7 @@ export const CurtainTypeStep = ({ data, updateData }) => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-6">
         {options.map((option) => {
           const Icon = option.icon;
           //lo que el usuario selecciona
