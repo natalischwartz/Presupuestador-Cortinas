@@ -10,7 +10,7 @@ import {
 } from "@react-pdf/renderer";
 
 // Constantes y utilidades (se mantienen igual)
-const VENDEDOR_EMAIL = "schwartznatali@gmail.com";
+const VENDEDOR_EMAIL = "estilocortina18@gmail.com";
 const VENDEDOR_TELEFONO = "+54 9 11 6162-2602";
 
 const safeToFixed = (value, fallback = 0) => {
